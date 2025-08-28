@@ -1,5 +1,13 @@
 [
-  { "id": 1, "name": "Royal Botanic Loop", "location": "Melbourne CBD", "difficulty": "Easy" },
-  { "id": 2, "name": "Merri Creek Meander", "location": "Fitzroy North", "difficulty": "Easy" },
-  { "id": 3, "name": "Dandenong Mountain", "location": "Ferntree Gully", "difficulty": "Advanced" }
+  { "id":1, "name":"Royal Botanic Loop", "location":"Melbourne CBD", "difficulty":"Easy",
+    "distance_km": 3.2, "elevation_m": 30, "date": "2025-09-06", "time":"09:30",
+    "capacity":20, "registered":12 },
+
+  { "id":2, "name":"Merri Creek Meander", "location":"Fitzroy North", "difficulty":"Easy",
+    "distance_km": 5.5, "elevation_m": 45, "date": "2025-09-13", "time":"10:00",
+    "capacity":15, "registered":9 },
+
+  { "id":3, "name":"Dandenong Mountain", "location":"Ferntree Gully", "difficulty":"Advanced",
+    "distance_km": 4.6, "elevation_m": 290, "date": "2025-10-04", "time":"08:00",
+    "capacity":25, "registered":24 }
 ]
