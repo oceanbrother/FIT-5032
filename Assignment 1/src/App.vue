@@ -59,115 +59,101 @@
     <hr class="my-4" />
 
     <!-- User Information -->
-    <h2 class="h5 mb-3">User Information</h2>
+    <h2 class="h5 mb-1">User Information</h2>
+    <p class="small mb-3" :class="submittedCards.length ? 'text-success' : 'text-muted'">
+      <i :class="submittedCards.length ? 'bi bi-check-circle-fill me-1' : 'bi bi-x-circle me-1'"></i>
+      {{ submittedCards.length ? 'Registered successfully!' : 'Not registered yet' }}
+    </p>
+    
+    
 
-    <div class="card shadow-sm border-0 mb-4">
-      <div class="card-header bg-white d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-person-lines-fill"></i>
-          <strong>Registration</strong>
-        </div>
-
-        <div v-if="selectedHike" class="small text-muted d-flex align-items-center gap-2">
-          <i class="bi bi-map"></i>
-          <span>{{ selectedHike.name }}</span>
-          <span class="badge" :class="badgeClass(selectedHike.difficulty)">{{ selectedHike.difficulty }}</span>
-          <button class="btn btn-sm btn-link text-decoration-none" @click="selectedHike = null">
-            Clear
-          </button>
+    <!-- Form -->
+    <form @submit.prevent="submitForm" novalidate>
+      <div class="row g-3">
+      <!-- Username -->
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            placeholder="Username"
+            v-model.trim="formData.username"
+            @blur="validateName(true)"
+            @input="validateName(false)"
+            :class="{
+              'is-invalid': !!errors.username,
+              'is-valid': !errors.username && formData.username
+            }"
+            required
+          />
+          <label for="username">Username</label>
+          <div class="invalid-feedback">{{ errors.username }}</div>
         </div>
       </div>
 
-      <div class="card-body">
-        <form @submit.prevent="submitForm" novalidate>
-          <div class="row g-3">
-            <!-- Username -->
-            <div class="col-md-6">
-              <div class="form-floating">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="username"
-                  placeholder="Username"
-                  v-model.trim="formData.username"
-                  @blur="validateName(true)"
-                  @input="validateName(false)"
-                  :class="{
-                    'is-invalid': !!errors.username,
-                    'is-valid': !errors.username && formData.username
-                  }"
-                  required
-                />
-                <label for="username">Username<span class="text-danger">*</span></label>
-                <div class="invalid-feedback">{{ errors.username }}</div>
-              </div>
-            </div>
-
-            <!-- Email -->
-            <div class="col-md-6">
-              <div class="form-floating">
-                <input
-                  type="email"
-                  class="form-control"
-                  id="email"
-                  placeholder="name@example.com"
-                  v-model.trim="formData.email"
-                  @blur="validateEmail(true)"
-                  @input="validateEmail(false)"
-                  :class="{
-                    'is-invalid': !!errors.email,
-                    'is-valid': !errors.email && formData.email
-                  }"
-                  required
-                />
-                <label for="email">Email<span class="text-danger">*</span></label>
-                <div class="invalid-feedback">{{ errors.email }}</div>
-              </div>
-            </div>
-
-            <!-- Gender -->
-            <div class="col-md-4">
-              <div class="form-floating">
-                <select class="form-select" id="gender" v-model="formData.gender">
-                  <option value="" disabled>Select...</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-                <label for="gender">Gender</label>
-              </div>
-            </div>
-
-            <!-- Reason -->
-            <div class="col-md-8">
-              <div class="form-floating">
-                <textarea
-                  class="form-control"
-                  id="reason"
-                  placeholder="Tell us why you want to join"
-                  style="height: 120px"
-                  v-model="formData.reason"
-                  maxlength="300"
-                ></textarea>
-                <label for="reason">Reason (optional)</label>
-              </div>
-              <div class="form-text d-flex justify-content-between">
-                <span>Share any preferences or health notes.</span>
-                <span>{{ formData.reason.length }}/300</span>
-              </div>
-            </div>
-          </div>
-        </form>
+      <!-- Email -->
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input
+            ref="emailRef"
+            type="email"
+            class="form-control"
+            id="email"
+            placeholder="name@example.com"
+            v-model.trim="formData.email"
+            @blur="validateEmail(true)"
+            @input="validateEmail(false)"
+            :class="{
+              'is-invalid': !!errors.email,
+              'is-valid': !errors.email && formData.email
+            }"
+            required
+          />
+          <label for="email">Email</label>
+          <div class="invalid-feedback">{{ errors.email }}</div>
+        </div>
       </div>
 
-      <div class="card-footer bg-white small text-muted d-flex justify-content-between">
-        <span v-if="selectedHike">
-          Selected trail: <strong>{{ selectedHike.name }}</strong>
-          <span v-if="selectedHike.date"> • {{ formatDate(selectedHike.date) }}</span>
-          <span v-if="selectedHike.time"> • {{ selectedHike.time }}</span>
-        </span>
+      <!-- Gender -->
+      <div class="col-md-4">
+        <div class="form-floating">
+          <select class="form-select" id="gender" v-model="formData.gender">
+            <option value="" disabled>Select...</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          <label for="gender">Gender</label>
+        </div>
+      </div>
+
+      <!-- Reason -->
+      <div class="col-md-8">
+        <div class="form-floating">
+          <textarea
+            class="form-control"
+            id="reason"
+            placeholder="Tell us why you want to join"
+            style="height: 120px"
+            v-model="formData.reason"
+            maxlength="300"
+        ></textarea>
+        <label for="reason">Reason (optional)</label>
       </div>
     </div>
+  </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-center gap-2 mt-4">
+        <button type="submit" class="btn btn-primary px-4" :disabled="!canSubmit">
+          <i class="bi bi-check2-circle me-1"></i> Submit
+        </button>
+        <button type="button" class="btn btn-outline-secondary px-4" @click="clearForm">
+          <i class="bi bi-eraser me-1"></i> Clear
+        </button>
+      </div>
+  </form>
 
     <!-- Submitted Cards -->
     <div class="row mt-4" v-if="submittedCards.length">
@@ -193,21 +179,77 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-// Using color to indicate difficulty level
-const badgeClass = (diff) => {
-  switch ((diff || '').toLowerCase()) {
-    case 'easy': return 'text-bg-success'
-    case 'intermediate': return 'text-bg-warning'
-    case 'advanced': return 'text-bg-danger'
-    default: return 'text-bg-secondary'
+import { ref, onMounted, computed } from 'vue'
+
+const hikes = ref([])
+const error = ref('')
+
+const formData = ref({
+  username: '',
+  email: '',
+  gender: '',
+  reason: ''
+})
+
+const errors = ref({
+  username: null,
+  email: null
+})
+
+// Username validation
+const validateName = (blur) => {
+  const v = formData.value.username.trim()
+  if (v.length < 5) {
+    errors.value.username = 'Username must be at least 5 characters.'
+  } else {
+    errors.value.username = null
   }
+  // Clear error if not blurred and valid
+  if (!blur && !v) errors.value.username = null
+}
+
+// Email validation
+const validateEmail = (blur) => {
+  const v = formData.value.email.trim()
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (v.length < 6) {
+    errors.value.email = 'Email must be at least 6 characters.'
+  } else if (!pattern.test(v)) {
+    errors.value.email = 'Enter a valid email address.'
+  } else {
+    errors.value.email = null
+  }
+  if (!blur && !v) errors.value.email = null
+}
+
+// Submit
+const canSubmit = computed(() =>
+  !!formData.value.username &&
+  !!formData.value.email &&
+  !errors.value.username &&
+  !errors.value.email
+)
+
+const submittedCards = ref([])
+
+const submitForm = () => {
+  validateName(true)
+  validateEmail(true)
+
+  if (!errors.value.username && !errors.value.email) {
+    submittedCards.value.push({ ...formData.value })
+    clearForm()
+  }
+}
+
+const clearForm = () => {
+  formData.value = { username: '', email: '', gender: '', reason: '' }
+  errors.value = { username: null, email: null }
 }
 
 // Button Click
 const selectForForm = (h) => {
 }
-
 
 // Format
 const formatDate = (iso) => {
@@ -224,9 +266,17 @@ const capacityPct = (h) => {
   return Math.min(100, Math.round((reg / cap) * 100))
 }
 
+// Using color to indicate difficulty level
+const badgeClass = (diff) => {
+  switch ((diff || '').toLowerCase()) {
+    case 'easy': return 'text-bg-success'
+    case 'intermediate': return 'text-bg-warning'
+    case 'advanced': return 'text-bg-danger'
+    default: return 'text-bg-secondary'
+  }
+}
 
-const hikes = ref([])
-const error = ref('')
+
 
 // fetch
 onMounted(async () => {
@@ -244,50 +294,7 @@ onMounted(async () => {
   }
 })
 
-const formData = ref({
-  username: '',
-  email: '',
-  gender: '',
-  reason: ''
-})
 
-const submittedCards = ref([])
-
-const errors = ref({
-  username: null,
-  email: null
-})
-
-const validateName = (blur) => {
-  if (formData.value.username.length < 3) {
-    if (blur) errors.value.username = 'Name must be at least 3 characters.'
-  } else {
-    errors.value.username = null
-  }
-}
-
-const validateEmail = (blur) => {
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!pattern.test(formData.value.email)) {
-    if (blur) errors.value.email = 'Enter a valid email address.'
-  } else {
-    errors.value.email = null
-  }
-}
-
-const submitForm = () => {
-  validateName(true)
-  validateEmail(true)
-  if (!errors.value.username && !errors.value.email) {
-    submittedCards.value.push({ ...formData.value })
-    clearForm()
-  }
-}
-
-const clearForm = () => {
-  formData.value = { username: '', email: '', gender: '', reason: '' }
-  errors.value = { username: null, email: null }
-}
 </script>
 
 <style scoped>
