@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "Royal Botanic Loop", "location": "Melbourne CBD", "difficulty": "Easy" },
+  { "id": 2, "name": "Merri Creek Meander", "location": "Fitzroy North", "difficulty": "Easy" },
+  { "id": 3, "name": "Dandenong Mountain", "location": "Ferntree Gully", "difficulty": "Advanced" }
+]
