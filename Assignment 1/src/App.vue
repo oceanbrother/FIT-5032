@@ -313,4 +313,34 @@ onMounted(async () => {
   color: white;
   padding: 10px;
 }
+.container {
+  background-color: #d6e9ff;
+  border-radius: 12px;
+}
+.form-control,
+.form-select {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.form-control:focus,
+.form-select:focus {
+  background-color: #fff;    
+  border-color: #666;
+  box-shadow: 0 0 0 0.2rem rgba(108,117,125,.25);
+}
+/* Error */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545;
+  background-color: #f8d7da;
+  box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25);
+}
+/* Successfully */
+.form-control.is-valid,
+.form-select.is-valid {
+  border-color: #198754;
+  background-color: #d1e7dd;
+  box-shadow: 0 0 0 0.2rem rgba(25,135,84,.25);
+}
 </style>
