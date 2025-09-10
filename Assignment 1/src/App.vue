@@ -1,6 +1,16 @@
 <template>
   <div class="container mt-5">
-    <h1 class="text-center mb-4">Welcome!</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="mb-0">Welcome!</h1>
+      
+      <div v-if="auth.isAuthenticated">
+      <span>Hello, {{ auth.user.email }}</span>
+      <button @click="logout" class="btn btn-sm btn-outline-secondary">Logout</button>
+    </div>
+    <div v-else>
+      <button @click="openLogin" class="btn btn-sm btn-primary">Login</button>
+    </div>
+    </div>
 
     <!-- Upcoming Hiking Trails -->
     <div class="mb-4">
@@ -45,7 +55,11 @@
             </div>
 
             <div class="card-footer bg-white">
-              <button class="btn btn-sm btn-outline-primary w-100" @click="selectForForm(h)">
+              <button class="btn btn-sm w-100" 
+              :class="auth.isAuthenticated ? 'btn-outline-primary' : 'btn-outline-secondary'"
+              :disabled="!auth.isAuthenticated"
+              :title="auth.isAuthenticated ? 'Register for this trail' : 'Please login to register'"
+              @click="selectForForm(h)">
                 <i class="bi bi-person-walking me-1"></i> Register
               </button>
             </div>
@@ -68,7 +82,9 @@
     
 
     <!-- Form -->
+     <!-- Disable not logged in for the form as a whole -->
     <form @submit.prevent="submitForm" novalidate>
+      <fieldset :disabled="!auth.isAuthenticated">
       <div class="row g-3">
       <!-- Username -->
       <div class="col-md-6">
@@ -153,6 +169,7 @@
           <i class="bi bi-eraser me-1"></i> Clear
         </button>
       </div>
+    </fieldset>
   </form>
 
     <!-- Submitted Cards -->
@@ -175,6 +192,27 @@
         </div>
       </div>
     </div>
+
+     <!-- Pop window -->
+   <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
+  <div class="auth-modal card shadow-lg">
+    <div class="card-header">
+      <strong>Login</strong>
+    </div>
+    <div class="card-body">
+      <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
+      <div class="form-floating mb-3">
+        <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
+        <label>Email</label>
+      </div>
+      <div class="form-floating mb-3">
+        <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
+        <label>Password</label>
+      </div>
+      <button class="btn btn-primary w-100" @click="doLogin">Login</button>
+    </div>
+    </div>
+  </div>
   </div>
 </template>
 
@@ -183,6 +221,48 @@ import { ref, onMounted, computed } from 'vue'
 
 const hikes = ref([])
 const error = ref('')
+
+const auth = ref({
+  isAuthenticated: false,
+  user: null
+})
+
+const showAuth = ref(false)
+const authError = ref('')
+const loginForm = ref({ email: '', password: '' })
+const selectedHike = ref(null)
+
+// Open login box
+const openLogin = () => {
+  showAuth.value = true
+  authError.value = ''
+}
+
+// Close login box
+const closeLogin = () => {
+  showAuth.value = false
+}
+
+// Perform login
+const doLogin = () => {
+  const { email, password } = loginForm.value
+
+  if (email === 'demo@example.com' && password === '123456') {
+    auth.value.isAuthenticated = true
+    auth.value.user = { email }
+    closeLogin()
+  } else {
+    authError.value = 'Invalid email or password'
+  }
+}
+
+// Logout
+const logout = () => {
+  auth.value.isAuthenticated = false
+  auth.value.user = null
+}
+
+
 
 const formData = ref({
   username: '',
@@ -227,7 +307,8 @@ const canSubmit = computed(() =>
   !!formData.value.username &&
   !!formData.value.email &&
   !errors.value.username &&
-  !errors.value.email
+  !errors.value.email &&
+  auth.value.isAuthenticated
 )
 
 const submittedCards = ref([])
@@ -249,6 +330,12 @@ const clearForm = () => {
 
 // Button Click
 const selectForForm = (h) => {
+    if (!auth.value.isAuthenticated) {
+    openLogin()
+    return
+  }
+  selectedHike.value = h
+  document.getElementById('username')?.focus()
 }
 
 // Format
@@ -293,8 +380,6 @@ onMounted(async () => {
     ]
   }
 })
-
-
 </script>
 
 <style scoped>
@@ -342,5 +427,17 @@ onMounted(async () => {
   border-color: #198754;
   background-color: #d1e7dd;
   box-shadow: 0 0 0 0.2rem rgba(25,135,84,.25);
+}
+/* Popup Window Style */
+.auth-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: grid; place-items: center;
+  z-index: 1050;
+}
+.auth-modal {
+  width: min(480px, 92vw);
+  border: none;
+  border-radius: 12px;
 }
 </style>
