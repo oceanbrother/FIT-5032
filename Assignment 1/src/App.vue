@@ -79,10 +79,7 @@
       {{ submittedCards.length ? 'Registered successfully!' : 'Not registered yet' }}
     </p>
     
-    
-
     <!-- Form -->
-     <!-- Disable not logged in for the form as a whole -->
     <form @submit.prevent="submitForm" novalidate>
       <fieldset :disabled="!auth.isAuthenticated">
       <div class="row g-3">
@@ -197,19 +194,48 @@
    <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
   <div class="auth-modal card shadow-lg">
     <div class="card-header">
-      <strong>Login</strong>
+      <strong>{{ authMode === 'login' ? 'Login' : 'Register' }}</strong>
     </div>
     <div class="card-body">
       <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
-      <div class="form-floating mb-3">
-        <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
-        <label>Email</label>
+      <!-- Login Form -->
+      <div v-if="authMode === 'login'">
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
+          <label>Email</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
+          <label>Password</label>
+        </div>
+        <button class="btn btn-primary w-100 mb-3" @click="doLogin">Login</button>
+        <div class="text-center">
+          <small class="text-muted">Don't have an account? 
+            <a href="#" @click.prevent="switchAuthMode" class="text-primary">Register here</a>
+          </small>
+        </div>
       </div>
-      <div class="form-floating mb-3">
-        <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
-        <label>Password</label>
+      <!-- Register Form -->
+      <div v-else>
+        <div class="form-floating mb-3">
+          <input type="text" class="form-control" placeholder="Username" v-model="regForm.username" />
+          <label>Username</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control" placeholder="Email" v-model="regForm.email" />
+          <label>Email</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
+          <label>Password</label>
+        </div>
+        <button class="btn btn-success w-100 mb-3" @click="doRegister">Register</button>
+        <div class="text-center">
+          <small class="text-muted">Already have an account? 
+            <a href="#" @click.prevent="switchAuthMode" class="text-primary">Login here</a>
+          </small>
+        </div>
       </div>
-      <button class="btn btn-primary w-100" @click="doLogin">Login</button>
     </div>
     </div>
   </div>
@@ -218,20 +244,27 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-
 const hikes = ref([])
 const error = ref('')
-
 const auth = ref({
   isAuthenticated: false,
   user: null
 })
-
 const showAuth = ref(false)
 const authError = ref('')
 const loginForm = ref({ email: '', password: '' })
+const regForm = ref({ username: '', email: '', password: '' })
+const authMode = ref('login') 
 const selectedHike = ref(null)
 
+// User storage functions
+const loadUsers = () => {
+  const stored = localStorage.getItem('hikeUsers')
+  return stored ? JSON.parse(stored) : []
+}
+const saveUsers = (users) => {
+  localStorage.setItem('hikeUsers', JSON.stringify(users))
+}
 // Open login box
 const openLogin = () => {
   showAuth.value = true
@@ -241,13 +274,23 @@ const openLogin = () => {
 // Close login box
 const closeLogin = () => {
   showAuth.value = false
+  authMode.value = 'login'
+  loginForm.value = { email: '', password: '' }
+  regForm.value = { username: '', email: '', password: '' }
+  authError.value = ''
 }
 
 // Perform login
 const doLogin = () => {
   const { email, password } = loginForm.value
-
-  if (email === 'demo@example.com' && password === '123456') {
+  // Check registered users first
+  const users = loadUsers()
+  const user = users.find(u => u.email === email && u.password === password)
+  if (user) {
+    auth.value.isAuthenticated = true
+    auth.value.user = { email: user.email, username: user.username }
+    closeLogin()
+  } else if (email === 'demo@example.com' && password === '123456') {
     auth.value.isAuthenticated = true
     auth.value.user = { email }
     closeLogin()
@@ -256,13 +299,56 @@ const doLogin = () => {
   }
 }
 
+// Perform registration
+const doRegister = () => {
+  authError.value = ''
+  const { username, email, password } = regForm.value
+  
+  if (!username || !email || !password) { 
+    authError.value = 'All fields are required.'
+    return 
+  }
+  if (username.length < 3) 
+  {
+    authError.value = 'Username must be at least 3 characters.'
+    return
+  }
+  if (password.length < 6) 
+  {
+    authError.value = 'Password must be at least 6 characters.'
+    return
+  }
+  const users = loadUsers()
+  const exists = users.some(x => x.email.trim().toLowerCase() === email.trim().toLowerCase())
+  if (exists) 
+  { 
+    authError.value = 'Email already registered.'
+    return 
+  }
+  users.push({ 
+    username: username.trim(), 
+    email: email.trim().toLowerCase(), 
+    password 
+  })
+  saveUsers(users)
+  
+  // Auto login after registration
+  auth.value.isAuthenticated = true
+  auth.value.user = { email: email.trim().toLowerCase(), username: username.trim() }
+  closeLogin()
+}
+
+// Switch between login and register modes
+const switchAuthMode = () => {
+  authMode.value = authMode.value === 'login' ? 'register' : 'login'
+  authError.value = ''
+}
+
 // Logout
 const logout = () => {
   auth.value.isAuthenticated = false
   auth.value.user = null
 }
-
-
 
 const formData = ref({
   username: '',
@@ -363,8 +449,6 @@ const badgeClass = (diff) => {
   }
 }
 
-
-
 // fetch
 onMounted(async () => {
   try {
@@ -435,6 +519,7 @@ onMounted(async () => {
   display: grid; place-items: center;
   z-index: 1050;
 }
+/* Auth Modal Style */
 .auth-modal {
   width: min(480px, 92vw);
   border: none;
