@@ -70,126 +70,6 @@
       <p v-else class="text-muted">Loading...</p>
     </div>
 
-    <hr class="my-4" />
-
-    <!-- User Information -->
-    <h2 class="h5 mb-1">User Information</h2>
-    <p class="small mb-3" :class="submittedCards.length ? 'text-success' : 'text-muted'">
-      <i :class="submittedCards.length ? 'bi bi-check-circle-fill me-1' : 'bi bi-x-circle me-1'"></i>
-      {{ submittedCards.length ? 'Registered successfully!' : 'Not registered yet' }}
-    </p>
-    
-    <!-- Form -->
-    <form @submit.prevent="submitForm" novalidate>
-      <fieldset :disabled="!auth.isAuthenticated">
-      <div class="row g-3">
-      <!-- Username -->
-      <div class="col-md-6">
-        <div class="form-floating">
-          <input
-            type="text"
-            class="form-control"
-            id="username"
-            placeholder="Username"
-            v-model.trim="formData.username"
-            @blur="validateName(true)"
-            @input="validateName(false)"
-            :class="{
-              'is-invalid': !!errors.username,
-              'is-valid': !errors.username && formData.username
-            }"
-            required
-          />
-          <label for="username">Username</label>
-          <div class="invalid-feedback">{{ errors.username }}</div>
-        </div>
-      </div>
-
-      <!-- Email -->
-      <div class="col-md-6">
-        <div class="form-floating">
-          <input
-            ref="emailRef"
-            type="email"
-            class="form-control"
-            id="email"
-            placeholder="name@example.com"
-            v-model.trim="formData.email"
-            @blur="validateEmail(true)"
-            @input="validateEmail(false)"
-            :class="{
-              'is-invalid': !!errors.email,
-              'is-valid': !errors.email && formData.email
-            }"
-            required
-          />
-          <label for="email">Email</label>
-          <div class="invalid-feedback">{{ errors.email }}</div>
-        </div>
-      </div>
-
-      <!-- Gender -->
-      <div class="col-md-4">
-        <div class="form-floating">
-          <select class="form-select" id="gender" v-model="formData.gender">
-            <option value="" disabled>Select...</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <label for="gender">Gender</label>
-        </div>
-      </div>
-
-      <!-- Reason -->
-      <div class="col-md-8">
-        <div class="form-floating">
-          <textarea
-            class="form-control"
-            id="reason"
-            placeholder="Tell us why you want to join"
-            style="height: 120px"
-            v-model="formData.reason"
-            maxlength="300"
-        ></textarea>
-        <label for="reason">Reason (optional)</label>
-      </div>
-    </div>
-  </div>
-
-      <!-- Buttons -->
-      <div class="d-flex justify-content-center gap-2 mt-4">
-        <button type="submit" class="btn btn-primary px-4" :disabled="!canSubmit">
-          <i class="bi bi-check2-circle me-1"></i> Submit
-        </button>
-        <button type="button" class="btn btn-outline-secondary px-4" @click="clearForm">
-          <i class="bi bi-eraser me-1"></i> Clear
-        </button>
-      </div>
-    </fieldset>
-  </form>
-
-    <!-- Submitted Cards -->
-    <div class="row mt-4" v-if="submittedCards.length">
-      <div class="d-flex flex-wrap">
-        <div
-          v-for="(card, index) in submittedCards"
-          :key="index"
-          class="card m-2"
-          style="width: 18rem;"
-        >
-          <div class="card-header">User Info</div>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">Username: {{ card.username }}</li>
-            <li class="list-group-item">Email: {{ card.email }}</li>
-            <li class="list-group-item">Gender: {{ card.gender || '—' }}</li>
-            <li class="list-group-item">Reason: {{ card.reason || '—' }}</li>
-            <li class="list-group-item" v-if="card.hike">Trail: {{ card.hike.name }}</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
      <!-- Pop window -->
    <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
   <div class="auth-modal card shadow-lg">
@@ -229,6 +109,25 @@
           <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
           <label>Password</label>
         </div>
+        <div class="form-floating mb-3">
+          <select class="form-select" v-model="regForm.gender">
+            <option value="" disabled>Select Gender...</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          <label>Gender</label>
+        </div>
+        <div class="form-floating mb-3">
+          <textarea
+            class="form-control"
+            placeholder="Tell us why you want to join hiking activities"
+            style="height: 100px"
+            v-model="regForm.reason"
+            maxlength="300"
+          ></textarea>
+          <label>Reason for joining (optional)</label>
+        </div>
         <button class="btn btn-success w-100 mb-3" @click="doRegister">Register</button>
         <div class="text-center">
           <small class="text-muted">Already have an account? 
@@ -253,7 +152,7 @@ const auth = ref({
 const showAuth = ref(false)
 const authError = ref('')
 const loginForm = ref({ email: '', password: '' })
-const regForm = ref({ username: '', email: '', password: '' })
+const regForm = ref({ username: '', email: '', password: '', gender: '', reason: '' })
 const authMode = ref('login') 
 const selectedHike = ref(null)
 
@@ -276,7 +175,7 @@ const closeLogin = () => {
   showAuth.value = false
   authMode.value = 'login'
   loginForm.value = { email: '', password: '' }
-  regForm.value = { username: '', email: '', password: '' }
+  regForm.value = { username: '', email: '', password: '', gender: '', reason: '' }
   authError.value = ''
 }
 
@@ -302,10 +201,10 @@ const doLogin = () => {
 // Perform registration
 const doRegister = () => {
   authError.value = ''
-  const { username, email, password } = regForm.value
+  const { username, email, password, gender, reason } = regForm.value
   
   if (!username || !email || !password) { 
-    authError.value = 'All fields are required.'
+    authError.value = 'Username, email and password are required.'
     return 
   }
   if (username.length < 3) 
@@ -328,13 +227,20 @@ const doRegister = () => {
   users.push({ 
     username: username.trim(), 
     email: email.trim().toLowerCase(), 
-    password 
+    password,
+    gender: gender || '',
+    reason: reason || ''
   })
   saveUsers(users)
   
   // Auto login after registration
   auth.value.isAuthenticated = true
-  auth.value.user = { email: email.trim().toLowerCase(), username: username.trim() }
+  auth.value.user = { 
+    email: email.trim().toLowerCase(), 
+    username: username.trim(),
+    gender: gender || '',
+    reason: reason || ''
+  }
   closeLogin()
 }
 
@@ -348,70 +254,6 @@ const switchAuthMode = () => {
 const logout = () => {
   auth.value.isAuthenticated = false
   auth.value.user = null
-}
-
-const formData = ref({
-  username: '',
-  email: '',
-  gender: '',
-  reason: ''
-})
-
-const errors = ref({
-  username: null,
-  email: null
-})
-
-// Username validation
-const validateName = (blur) => {
-  const v = formData.value.username.trim()
-  if (v.length < 5) {
-    errors.value.username = 'Username must be at least 5 characters.'
-  } else {
-    errors.value.username = null
-  }
-  // Clear error if not blurred and valid
-  if (!blur && !v) errors.value.username = null
-}
-
-// Email validation
-const validateEmail = (blur) => {
-  const v = formData.value.email.trim()
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (v.length < 6) {
-    errors.value.email = 'Email must be at least 6 characters.'
-  } else if (!pattern.test(v)) {
-    errors.value.email = 'Enter a valid email address.'
-  } else {
-    errors.value.email = null
-  }
-  if (!blur && !v) errors.value.email = null
-}
-
-// Submit
-const canSubmit = computed(() =>
-  !!formData.value.username &&
-  !!formData.value.email &&
-  !errors.value.username &&
-  !errors.value.email &&
-  auth.value.isAuthenticated
-)
-
-const submittedCards = ref([])
-
-const submitForm = () => {
-  validateName(true)
-  validateEmail(true)
-
-  if (!errors.value.username && !errors.value.email) {
-    submittedCards.value.push({ ...formData.value })
-    clearForm()
-  }
-}
-
-const clearForm = () => {
-  formData.value = { username: '', email: '', gender: '', reason: '' }
-  errors.value = { username: null, email: null }
 }
 
 // Button Click
