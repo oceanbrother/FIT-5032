@@ -1,169 +1,135 @@
 <template>
-  <div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="mb-0">Welcome!</h1>
-      
-      <div v-if="auth.isAuthenticated">
-      <span>Hello, {{ auth.user.email }}</span>
-      <button @click="logout" class="btn btn-sm btn-outline-secondary">Logout</button>
-    </div>
-    <div v-else>
-      <button @click="openLogin" class="btn btn-sm btn-primary">Login</button>
-    </div>
-    </div>
+  <div>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+      <div class="container">
+        <span class="navbar-brand">Hiking Trails</span>
+        <div class="navbar-nav ms-auto">
+          <router-link 
+            v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 
+            to="/admin" 
+            class="nav-link btn btn-outline-primary me-2 admin-panel-btn"
+          >
+            <i class="bi bi-gear-fill me-1"></i>Admin Panel
+          </router-link>
+          <span v-if="auth.isAuthenticated" class="nav-link">
+            Hello, {{ auth.user.username || auth.user.email }}
+            <span v-if="auth.user?.role" class="badge bg-primary ms-1">{{ auth.user.role }}</span>
+          </span>
+          <button v-if="auth.isAuthenticated" @click="logout" class="btn btn-sm btn-outline-secondary ms-2">
+            Logout
+          </button>
+          <button v-else @click="openLogin" class="btn btn-sm btn-primary ms-2">
+            Login
+          </button>
+        </div>
+      </div>
+    </nav>
 
-    <!-- Upcoming Hiking Trails -->
-    <div class="mb-4">
-      <h2 class="h5">Upcoming Hiking Trails</h2>
-      <p v-if="error" class="text-danger">{{ error }}</p>
+    <!-- Router View -->
+    <router-view></router-view>
 
-      <div v-if="hikes.length" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-        <div class="col" v-for="h in hikes" :key="h.id">
-          <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex align-items-start justify-content-between">
-                <h5 class="card-title mb-1">{{ h.name }}</h5>
-                <span class="badge" :class="badgeClass(h.difficulty)">{{ h.difficulty }}</span>
-              </div>
-
-              <p class="text-muted small mb-2">
-                <i class="bi bi-geo-alt me-1"></i>{{ h.location }}
-              </p>
-
-              <ul class="list-unstyled small mb-3">
-                <li v-if="h.distance_km"><i class="bi bi-arrows-move me-1"></i>{{ h.distance_km }} km</li>
-                <li v-if="h.elevation_m"><i class="bi bi-graph-up-arrow me-1"></i>↑ {{ h.elevation_m }} m</li>
-                <li v-if="h.date || h.time">
-                  <i class="bi bi-calendar-event me-1"></i>{{ formatDate(h.date) }}
-                  <span v-if="h.time">• {{ h.time }}</span>
-                </li>
-              </ul>
-
-              <div v-if="h.capacity && h.registered" class="mt-auto">
-                <div class="progress" style="height:8px;">
-                  <div
-                    class="progress-bar"
-                    role="progressbar"
-                    :style="{ width: capacityPct(h) + '%' }"
-                    :aria-valuenow="capacityPct(h)"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                  ></div>
-                </div>
-                <small class="text-muted">{{ h.registered }} / {{ h.capacity }} spots filled</small>
-              </div>
+    <!-- Login/Register Modal -->
+    <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
+      <div class="auth-modal card shadow-lg">
+        <div class="card-header">
+          <strong>{{ authMode === 'login' ? 'Login' : 'Register' }}</strong>
+        </div>
+        <div class="card-body">
+          <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
+          
+          <!-- Login Form -->
+          <div v-if="authMode === 'login'">
+            <div class="form-floating mb-3">
+              <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
+              <label>Email</label>
             </div>
-
-            <div class="card-footer bg-white">
-              <button class="btn btn-sm w-100" 
-              :class="auth.isAuthenticated ? 'btn-outline-primary' : 'btn-outline-secondary'"
-              :disabled="!auth.isAuthenticated"
-              :title="auth.isAuthenticated ? 'Register for this trail' : 'Please login to register'"
-              @click="selectForForm(h)">
-                <i class="bi bi-person-walking me-1"></i> Register
-              </button>
+            <div class="form-floating mb-3">
+              <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
+              <label>Password</label>
+            </div>
+            <button class="btn btn-primary w-100 mb-3" @click="doLogin">Login</button>
+            <div class="text-center">
+              <small class="text-muted">Don't have an account? 
+                <a href="#" @click.prevent="switchAuthMode" class="text-primary">Register here</a>
+              </small>
+            </div>
+          </div>
+          
+          <!-- Register Form -->
+          <div v-else>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" placeholder="Username" v-model="regForm.username" />
+              <label>Username</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="email" class="form-control" placeholder="Email" v-model="regForm.email" />
+              <label>Email</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
+              <label>Password</label>
+            </div>
+            <div class="form-floating mb-3">
+              <select class="form-select" v-model="regForm.gender">
+                <option value="" disabled>Select Gender...</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+              <label>Gender</label>
+            </div>
+            <div class="form-floating mb-3">
+              <textarea
+                class="form-control"
+                placeholder="Tell us why you want to join hiking activities"
+                style="height: 100px"
+                v-model="regForm.reason"
+                maxlength="300"
+              ></textarea>
+              <label>Reason for joining (optional)</label>
+            </div>
+            <button class="btn btn-success w-100 mb-3" @click="doRegister">Register</button>
+            <div class="text-center">
+              <small class="text-muted">Already have an account? 
+                <a href="#" @click.prevent="switchAuthMode" class="text-primary">Login here</a>
+              </small>
             </div>
           </div>
         </div>
       </div>
-
-      <p v-else class="text-muted">Loading...</p>
     </div>
-
-     <!-- Pop window -->
-   <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
-  <div class="auth-modal card shadow-lg">
-    <div class="card-header">
-      <strong>{{ authMode === 'login' ? 'Login' : 'Register' }}</strong>
-    </div>
-    <div class="card-body">
-      <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
-      <!-- Login Form -->
-      <div v-if="authMode === 'login'">
-        <div class="form-floating mb-3">
-          <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
-          <label>Email</label>
-        </div>
-        <div class="form-floating mb-3">
-          <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
-          <label>Password</label>
-        </div>
-        <button class="btn btn-primary w-100 mb-3" @click="doLogin">Login</button>
-        <div class="text-center">
-          <small class="text-muted">Don't have an account? 
-            <a href="#" @click.prevent="switchAuthMode" class="text-primary">Register here</a>
-          </small>
-        </div>
-      </div>
-      <!-- Register Form -->
-      <div v-else>
-        <div class="form-floating mb-3">
-          <input type="text" class="form-control" placeholder="Username" v-model="regForm.username" />
-          <label>Username</label>
-        </div>
-        <div class="form-floating mb-3">
-          <input type="email" class="form-control" placeholder="Email" v-model="regForm.email" />
-          <label>Email</label>
-        </div>
-        <div class="form-floating mb-3">
-          <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
-          <label>Password</label>
-        </div>
-        <div class="form-floating mb-3">
-          <select class="form-select" v-model="regForm.gender">
-            <option value="" disabled>Select Gender...</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <label>Gender</label>
-        </div>
-        <div class="form-floating mb-3">
-          <textarea
-            class="form-control"
-            placeholder="Tell us why you want to join hiking activities"
-            style="height: 100px"
-            v-model="regForm.reason"
-            maxlength="300"
-          ></textarea>
-          <label>Reason for joining (optional)</label>
-        </div>
-        <button class="btn btn-success w-100 mb-3" @click="doRegister">Register</button>
-        <div class="text-center">
-          <small class="text-muted">Already have an account? 
-            <a href="#" @click.prevent="switchAuthMode" class="text-primary">Login here</a>
-          </small>
-        </div>
-      </div>
-    </div>
-    </div>
-  </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-const hikes = ref([])
-const error = ref('')
+import { ref, onMounted, provide } from 'vue'
+import { useRouter } from 'vue-router'
+import { login, logout as authLogout, isAuthenticated, currentUser } from '@/services/auth'
+
+const router = useRouter()
+
 const auth = ref({
   isAuthenticated: false,
   user: null
 })
+
 const showAuth = ref(false)
 const authError = ref('')
 const loginForm = ref({ email: '', password: '' })
 const regForm = ref({ username: '', email: '', password: '', gender: '', reason: '' })
-const authMode = ref('login') 
-const selectedHike = ref(null)
+const authMode = ref('login')
 
 // User storage functions
 const loadUsers = () => {
   const stored = localStorage.getItem('hikeUsers')
   return stored ? JSON.parse(stored) : []
 }
+
 const saveUsers = (users) => {
   localStorage.setItem('hikeUsers', JSON.stringify(users))
 }
+
 // Open login box
 const openLogin = () => {
   showAuth.value = true
@@ -182,16 +148,33 @@ const closeLogin = () => {
 // Perform login
 const doLogin = () => {
   const { email, password } = loginForm.value
+
   // Check registered users first
   const users = loadUsers()
   const user = users.find(u => u.email === email && u.password === password)
+  
   if (user) {
     auth.value.isAuthenticated = true
-    auth.value.user = { email: user.email, username: user.username }
+    auth.value.user = { 
+      email: user.email, 
+      username: user.username,
+      role: user.role || 'user',
+      gender: user.gender,
+      reason: user.reason
+    }
+    login(auth.value.user)
+    closeLogin()
+  } else if (email === 'admin@example.com' && password === 'admin123') {
+    // Default admin account
+    auth.value.isAuthenticated = true
+    auth.value.user = { email, username: 'Admin', role: 'admin' }
+    login(auth.value.user)
     closeLogin()
   } else if (email === 'demo@example.com' && password === '123456') {
+    // Default demo user account
     auth.value.isAuthenticated = true
-    auth.value.user = { email }
+    auth.value.user = { email, username: 'Demo User', role: 'user' }
+    login(auth.value.user)
     closeLogin()
   } else {
     authError.value = 'Invalid email or password'
@@ -207,40 +190,46 @@ const doRegister = () => {
     authError.value = 'Username, email and password are required.'
     return 
   }
-  if (username.length < 3) 
-  {
+  
+  if (username.length < 3) {
     authError.value = 'Username must be at least 3 characters.'
     return
   }
-  if (password.length < 6) 
-  {
+  
+  if (password.length < 6) {
     authError.value = 'Password must be at least 6 characters.'
     return
   }
+
   const users = loadUsers()
   const exists = users.some(x => x.email.trim().toLowerCase() === email.trim().toLowerCase())
-  if (exists) 
-  { 
+  if (exists) { 
     authError.value = 'Email already registered.'
     return 
   }
-  users.push({ 
+
+  const newUser = { 
     username: username.trim(), 
     email: email.trim().toLowerCase(), 
     password,
     gender: gender || '',
-    reason: reason || ''
-  })
+    reason: reason || '',
+    role: 'user'
+  }
+  
+  users.push(newUser)
   saveUsers(users)
   
   // Auto login after registration
   auth.value.isAuthenticated = true
   auth.value.user = { 
-    email: email.trim().toLowerCase(), 
-    username: username.trim(),
-    gender: gender || '',
-    reason: reason || ''
+    email: newUser.email, 
+    username: newUser.username,
+    gender: newUser.gender,
+    reason: newUser.reason,
+    role: newUser.role
   }
+  login(auth.value.user)
   closeLogin()
 }
 
@@ -254,117 +243,91 @@ const switchAuthMode = () => {
 const logout = () => {
   auth.value.isAuthenticated = false
   auth.value.user = null
+  authLogout()
+  router.push('/')
 }
 
-// Button Click
-const selectForForm = (h) => {
-    if (!auth.value.isAuthenticated) {
-    openLogin()
-    return
-  }
-  selectedHike.value = h
-  document.getElementById('username')?.focus()
-}
-
-// Format
-const formatDate = (iso) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d)) return iso
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-// Capacity display
-const capacityPct = (h) => {
-  const reg = Number(h?.registered || 0)
-  const cap = Number(h?.capacity || 1)
-  return Math.min(100, Math.round((reg / cap) * 100))
-}
-
-// Using color to indicate difficulty level
-const badgeClass = (diff) => {
-  switch ((diff || '').toLowerCase()) {
-    case 'easy': return 'text-bg-success'
-    case 'intermediate': return 'text-bg-warning'
-    case 'advanced': return 'text-bg-danger'
-    default: return 'text-bg-secondary'
-  }
-}
-
-// fetch
-onMounted(async () => {
-  try {
-    const res = await fetch('/hikes.json', { cache: 'no-store' })
-    if (!res.ok) throw new Error('Failed to load hikes.json')
-    const data = await res.json()
-    hikes.value = Array.isArray(data) ? data : []
-  } catch (err) {
-    console.error(err)
-    error.value = 'Failed to load hikes.json, showing fallback'
-    hikes.value = [
-      { id: 1, name: 'Royal Botanic Loop (fallback)', location: 'Melbourne CBD', difficulty: 'Easy' }
-    ]
-  }
+// Check authentication status on mount
+onMounted(() => {
+  auth.value.isAuthenticated = isAuthenticated()
+  auth.value.user = currentUser()
 })
+
+// Provide auth to child components
+provide('auth', auth)
+provide('openLogin', openLogin)
 </script>
 
 <style scoped>
-.trail-cover {
-  height: 120px;
-  background: linear-gradient(135deg, #d1e9ff, #e6fff3);
-  border-bottom: 1px solid rgba(0,0,0,.05);
+/* Popup Window Style */
+.auth-backdrop {
+  position: fixed; 
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  display: grid; 
+  place-items: center;
+  z-index: 1050;
 }
-.card { border: none; box-shadow: 0 8px 24px rgba(0,0,0,.06); }
-.card {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-}
-.card-header {
-  background-color: #275FDA;
-  color: white;
-  padding: 10px;
-}
-.container {
-  background-color: #d6e9ff;
+
+.auth-modal {
+  width: min(480px, 92vw);
+  border: none;
   border-radius: 12px;
 }
+
+/* Form Styles */
 .form-control,
 .form-select {
   background-color: #f5f5f5;
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+
 .form-control:focus,
 .form-select:focus {
   background-color: #fff;    
   border-color: #666;
   box-shadow: 0 0 0 0.2rem rgba(108,117,125,.25);
 }
-/* Error */
-.form-control.is-invalid,
-.form-select.is-invalid {
-  border-color: #dc3545;
-  background-color: #f8d7da;
-  box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25);
+
+/* Card Styles */
+.card { 
+  border: 1px solid #ccc; 
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
 }
-/* Successfully */
-.form-control.is-valid,
-.form-select.is-valid {
-  border-color: #198754;
-  background-color: #d1e7dd;
-  box-shadow: 0 0 0 0.2rem rgba(25,135,84,.25);
+
+.card-header {
+  background-color: #275FDA;
+  color: white;
+  padding: 10px;
 }
-/* Popup Window Style */
-.auth-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.35);
-  display: grid; place-items: center;
-  z-index: 1050;
-}
-/* Auth Modal Style */
-.auth-modal {
-  width: min(480px, 92vw);
-  border: none;
+
+.container {
+  background-color: #d6e9ff;
   border-radius: 12px;
+}
+
+/* Admin Panel Button Style */
+.admin-panel-btn {
+  border: 2px solid #0d6efd !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2) !important;
+  transition: all 0.3s ease !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+}
+
+.admin-panel-btn:hover {
+  border-color: #0b5ed7 !important;
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+.admin-panel-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3) !important;
 }
 </style>
