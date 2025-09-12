@@ -97,20 +97,24 @@
               <li v-if="h.elevation_m">Elevation: {{ h.elevation_m }} m</li>
               <li v-if="h.capacity !== undefined">Capacity: {{ h.registered || 0 }} / {{ h.capacity }}</li>
               <li v-if="h.date || h.time"><i class="bi bi-calendar-event me-1"></i>{{ h.date || '—' }} {{ h.time ? '• '+h.time : '' }}</li>
+              <li class="mt-2">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-star-fill text-warning me-1"></i>
+                  <strong>{{ getAverageRating(h.id).toFixed(1) }}</strong>
+                  <small class="text-muted ms-1">({{ getRatingCount(h.id) }} evaluations)</small>
+                </div>
+              </li>
             </ul>
           </div>
           <div class="card-footer bg-white d-flex gap-2">
-            <template v-if="typeof h.id === 'string'">
-              <button class="btn btn-sm btn-outline-primary" @click="editTrail(idx)">
-                <i class="bi bi-pencil-square me-1"></i>Edit
-              </button>
-              <button class="btn btn-sm btn-outline-danger" @click="removeTrail(idx)">
-                <i class="bi bi-trash3 me-1"></i>Delete
-              </button>
-            </template>
-            <template v-else>
-              <span class="badge bg-info text-dark">Original Trail</span>
-              <small class="text-muted ms-auto">Read-only</small>
+            <button class="btn btn-sm btn-outline-primary" @click="editTrail(idx)">
+              <i class="bi bi-pencil-square me-1"></i>Edit
+            </button>
+            <button class="btn btn-sm btn-outline-danger" @click="removeTrail(idx)">
+              <i class="bi bi-trash3 me-1"></i>Delete
+            </button>
+            <template v-if="typeof h.id === 'number'">
+              <span class="badge bg-info text-dark ms-auto">Original</span>
             </template>
           </div>
         </div>
@@ -132,45 +136,55 @@ const form = ref({
   distance_km: null, elevation_m: null, date: '', time: '',
   capacity: null, registered: null
 });
+const ratings = ref([])
+
+// Load ratings from localStorage
+const loadRatings = () => {
+  try {
+    const stored = localStorage.getItem('trailRatings')
+    ratings.value = stored ? JSON.parse(stored) : []
+  } catch {
+    ratings.value = []
+  }
+}
+
+// Get average rating for a trail
+const getAverageRating = (trailId) => {
+  const trailRatings = ratings.value.filter(r => r.trailId === trailId)
+  if (trailRatings.length === 0) return 0
+  const sum = trailRatings.reduce((acc, r) => acc + r.rating, 0)
+  return sum / trailRatings.length
+}
+
+// Get rating count for a trail
+const getRatingCount = (trailId) => {
+  return ratings.value.filter(r => r.trailId === trailId).length
+}
 
 const load = async () => {
   try {
     const storedHikes = localStorage.getItem(LS_HIKES)
-    let adminHikes = []
-    
     if (storedHikes) {
-      adminHikes = JSON.parse(storedHikes)
+      hikes.value = JSON.parse(storedHikes)
+      return
     }
-
-    let originalHikes = []
     try {
       const res = await fetch('/hikes.json', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        originalHikes = Array.isArray(data) ? data : []
+        hikes.value = Array.isArray(data) ? data : []
       }
     } catch (err) {
       console.log('Could not load hikes.json:', err)
+      hikes.value = []
     }
-    
-    //avoid duplicates by id
-    const allHikes = [...originalHikes]
-    adminHikes.forEach(adminHike => {
-      if (!originalHikes.find(h => h.id === adminHike.id)) {
-        allHikes.push(adminHike)
-      }
-    })
-    
-    hikes.value = allHikes
   } catch (error) {
     console.error('Error loading hikes:', error)
     hikes.value = []
   }
 };
 const save = () => {
-  //Only save admin added trails
-  const adminTrails = hikes.value.filter(h => typeof h.id === 'string')
-  localStorage.setItem(LS_HIKES, JSON.stringify(adminTrails))
+  localStorage.setItem(LS_HIKES, JSON.stringify(hikes.value))
 };
 
 const resetForm = () => {
@@ -196,23 +210,12 @@ const saveTrail = () => {
 
 const editTrail = (idx) => {
   const trail = hikes.value[idx]
-  // Prevent editing of original trails
-  if (typeof trail.id === 'number') {
-    alert('Cannot edit original trails. You can only edit trails that you added.')
-    return
-  }
   editIndex.value = idx
   form.value = { ...trail }
 };
 
 const removeTrail = (idx) => {
   const trail = hikes.value[idx]
-  
-  // Prevent deletion of original trails (those with numeric IDs)
-  if (typeof trail.id === 'number') {
-    alert('Cannot delete original trails. You can only delete trails that you added.')
-    return
-  }
   if (!confirm('Delete this trail?')) return
   hikes.value.splice(idx, 1)
   save()
@@ -230,6 +233,7 @@ const badgeClass = (diff) => {
 
 onMounted(async () => {
   await load();
+  loadRatings();
 });
 </script>
 
