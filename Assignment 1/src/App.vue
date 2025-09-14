@@ -29,7 +29,7 @@
     <!-- Router View -->
     <router-view></router-view>
 
-    <!-- Login/Register Modal -->
+    <!-- Login and Register Modal -->
     <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
       <div class="auth-modal card shadow-lg">
         <div class="card-header">
@@ -69,6 +69,10 @@
             <div class="form-floating mb-3">
               <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
               <label>Password</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="password" class="form-control" placeholder="Confirm Password" v-model="regForm.confirmPassword" />
+              <label>Confirm Password</label>
             </div>
             <div class="form-floating mb-3">
               <select class="form-select" v-model="regForm.gender">
@@ -117,7 +121,7 @@ const auth = ref({
 const showAuth = ref(false)
 const authError = ref('')
 const loginForm = ref({ email: '', password: '' })
-const regForm = ref({ username: '', email: '', password: '', gender: '', reason: '' })
+const regForm = ref({ username: '', email: '', password: '', confirmPassword: '', gender: '', reason: '' })
 const authMode = ref('login')
 
 // User storage functions
@@ -141,7 +145,7 @@ const closeLogin = () => {
   showAuth.value = false
   authMode.value = 'login'
   loginForm.value = { email: '', password: '' }
-  regForm.value = { username: '', email: '', password: '', gender: '', reason: '' }
+  regForm.value = { username: '', email: '', password: '', confirmPassword: '', gender: '', reason: '' }
   authError.value = ''
 }
 
@@ -184,10 +188,10 @@ const doLogin = () => {
 // Perform registration
 const doRegister = () => {
   authError.value = ''
-  const { username, email, password, gender, reason } = regForm.value
+  const { username, email, password, confirmPassword, gender, reason } = regForm.value
   
-  if (!username || !email || !password) { 
-    authError.value = 'Username, email and password are required.'
+  if (!username || !email || !password || !confirmPassword) { 
+    authError.value = 'Username, email, password and confirm password are required.'
     return 
   }
   
@@ -198,6 +202,11 @@ const doRegister = () => {
   
   if (password.length < 6) {
     authError.value = 'Password must be at least 6 characters.'
+    return
+  }
+
+  if (password !== confirmPassword) {
+    authError.value = 'Passwords do not match.'
     return
   }
 

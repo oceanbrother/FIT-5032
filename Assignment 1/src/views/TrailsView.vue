@@ -194,8 +194,6 @@ const loadRatings = () => {
   try {
     const stored = localStorage.getItem('trailRatings')
     ratings.value = stored ? JSON.parse(stored) : []
-    
-    // Add default ratings for original trails if no ratings exist
     if (ratings.value.length === 0) {
       addDefaultRatings()
     }
@@ -208,7 +206,6 @@ const loadRatings = () => {
 // Add default ratings for original trails
 const addDefaultRatings = () => {
   const defaultRatings = [
-    // Royal Botanic Loop (id: 1) ratings
     {
       id: 'default-1-1',
       trailId: 1,
@@ -237,7 +234,6 @@ const addDefaultRatings = () => {
       timestamp: '2025-09-06T09:15:00.000Z'
     },
     
-    // Merri Creek Meander (id: 2) ratings
     {
       id: 'default-2-1',
       trailId: 2,
@@ -257,7 +253,6 @@ const addDefaultRatings = () => {
       timestamp: '2025-09-05T11:30:00.000Z'
     },
     
-    // Dandenong Mountain (id: 3) ratings
     {
       id: 'default-3-1',
       trailId: 3,
@@ -286,12 +281,10 @@ const addDefaultRatings = () => {
       timestamp: '2025-09-02T15:40:00.000Z'
     }
   ]
-  
   ratings.value = defaultRatings
   saveRatings()
 }
 
-// Save ratings to localStorage
 const saveRatings = () => {
   localStorage.setItem('trailRatings', JSON.stringify(ratings.value))
 }
@@ -303,11 +296,9 @@ const getAverageRating = (trailId) => {
   const sum = trailRatings.reduce((acc, r) => acc + r.rating, 0)
   return sum / trailRatings.length
 }
-
 const getRatingCount = (trailId) => {
   return ratings.value.filter(r => r.trailId === trailId).length
 }
-
 const getUserRating = (trailId) => {
   if (!auth.value.isAuthenticated) return null
   return ratings.value.find(r => r.trailId === trailId && r.userId === auth.value.user?.email)
