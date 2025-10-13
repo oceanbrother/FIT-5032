@@ -15,6 +15,13 @@
             <i class="bi bi-house-fill me-1"></i>Home
           </router-link>
           <router-link 
+            to="/email" 
+            class="nav-link btn btn-outline-warning me-2"
+            active-class="active"
+          >
+            <i class="bi bi-envelope-fill me-1"></i>Send Email
+          </router-link>
+          <router-link 
             to="/firebase-test" 
             class="nav-link btn btn-outline-info me-2"
             active-class="active"

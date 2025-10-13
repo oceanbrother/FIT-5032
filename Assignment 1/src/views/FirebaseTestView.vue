@@ -3,12 +3,12 @@
   <div class="firebase-test container py-4">
     <div class="card">
       <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">🔥 Firebase Configuration Test</h4>
+        <h4 class="mb-0">Firebase Configuration Test</h4>
       </div>
       <div class="card-body">
         <!-- Configuration Status -->
         <div class="mb-4">
-          <h5>📋 Configuration Status</h5>
+          <h5> Configuration Status</h5>
           <div v-if="configStatus.isConfigured" class="alert alert-success">
             <i class="bi bi-check-circle-fill me-2"></i>
             Firebase is configured correctly!
@@ -38,7 +38,7 @@
 
         <!-- Connection Test -->
         <div class="mb-4">
-          <h5>🔗 Connection Test</h5>
+          <h5> Connection Test</h5>
           <button 
             class="btn btn-primary" 
             @click="testConnection"
@@ -58,7 +58,7 @@
 
         <!-- Authentication Test -->
         <div class="mb-4">
-          <h5>🔐 Authentication Status</h5>
+          <h5> Authentication Status</h5>
           <div v-if="authUser">
             <div class="alert alert-success">
               <strong>Logged in as:</strong><br>
@@ -80,7 +80,7 @@
 
         <!-- Firestore Test -->
         <div class="mb-4">
-          <h5>💾 Firestore Test</h5>
+          <h5> Firestore Test</h5>
           <button 
             class="btn btn-primary" 
             @click="testFirestore"
@@ -175,7 +175,7 @@ const testConnection = async () => {
       connectionResult.value = {
         tested: true,
         success: true,
-        message: '✅ Successfully connected to Firebase! Auth service is active.'
+        message: 'Successfully connected to Firebase! Auth service is active.'
       }
     } else {
       throw new Error('Auth service not initialized')
@@ -184,7 +184,7 @@ const testConnection = async () => {
     connectionResult.value = {
       tested: true,
       success: false,
-      message: `❌ Connection failed: ${error.message}`
+      message: `Connection failed: ${error.message}`
     }
   } finally {
     testing.value = false
@@ -208,13 +208,13 @@ const testFirestore = async () => {
     firestoreResult.value = {
       tested: true,
       success: true,
-      message: '✅ Firestore connection successful! Database is accessible.'
+      message: 'Firestore connection successful! Database is accessible.'
     }
   } catch (error) {
     firestoreResult.value = {
       tested: true,
       success: false,
-      message: `❌ Firestore test failed: ${error.message}. Make sure Firestore is enabled in Firebase Console.`
+      message: `Firestore test failed: ${error.message}. Make sure Firestore is enabled in Firebase Console.`
     }
   } finally {
     testingFirestore.value = false
