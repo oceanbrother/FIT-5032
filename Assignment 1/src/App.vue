@@ -3,12 +3,29 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
       <div class="container">
-        <span class="navbar-brand">Hiking Trails</span>
+        <router-link to="/" class="navbar-brand" style="cursor: pointer; text-decoration: none;">
+          Hiking Trails
+        </router-link>
         <div class="navbar-nav ms-auto">
+          <router-link 
+            to="/trails" 
+            class="nav-link btn btn-outline-success me-2"
+            active-class="active"
+          >
+            <i class="bi bi-house-fill me-1"></i>Home
+          </router-link>
+          <router-link 
+            to="/firebase-test" 
+            class="nav-link btn btn-outline-info me-2"
+            active-class="active"
+          >
+            <i class="bi bi-gear me-1"></i>Firebase Test
+          </router-link>
           <router-link 
             v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 
             to="/admin" 
             class="nav-link btn btn-outline-primary me-2 admin-panel-btn"
+            active-class="active"
           >
             <i class="bi bi-gear-fill me-1"></i>Admin Panel
           </router-link>
@@ -32,23 +49,97 @@
     <!-- Login and Register Modal -->
     <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
       <div class="auth-modal card shadow-lg">
-        <div class="card-header">
-          <strong>{{ authMode === 'login' ? 'Login' : 'Register' }}</strong>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>{{ showPasswordReset ? 'Reset Password' : (authMode === 'login' ? 'Login' : 'Register') }}</strong>
+          <button @click="closeLogin" class="btn-close btn-close-white" aria-label="Close"></button>
         </div>
         <div class="card-body">
           <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
           
-          <!-- Login Form -->
-          <div v-if="authMode === 'login'">
+          <!-- Password Reset Form -->
+          <div v-if="showPasswordReset">
+            <p class="text-muted mb-3">Enter your email address and we'll send you a link to reset your password.</p>
             <div class="form-floating mb-3">
-              <input type="email" class="form-control" placeholder="Email" v-model="loginForm.email" />
+              <input 
+                type="email" 
+                class="form-control" 
+                placeholder="Email" 
+                v-model="resetEmail"
+                :disabled="authLoading"
+              />
+              <label>Email</label>
+            </div>
+            <button 
+              class="btn btn-primary w-100 mb-3" 
+              @click="doPasswordReset"
+              :disabled="authLoading || !resetEmail"
+            >
+              {{ authLoading ? 'Sending...' : 'Send Reset Link' }}
+            </button>
+            <div class="text-center">
+              <small class="text-muted">
+                <a href="#" @click.prevent="showPasswordReset = false" class="text-primary">Back to Login</a>
+              </small>
+            </div>
+          </div>
+
+          <!-- Login Form -->
+          <div v-else-if="authMode === 'login'">
+            <div class="form-floating mb-3">
+              <input 
+                type="email" 
+                class="form-control" 
+                placeholder="Email" 
+                v-model="loginForm.email"
+                :disabled="authLoading"
+                @keyup.enter="doLogin"
+              />
               <label>Email</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="password" class="form-control" placeholder="Password" v-model="loginForm.password" />
+              <input 
+                type="password" 
+                class="form-control" 
+                placeholder="Password" 
+                v-model="loginForm.password"
+                :disabled="authLoading"
+                @keyup.enter="doLogin"
+              />
               <label>Password</label>
             </div>
-            <button class="btn btn-primary w-100 mb-3" @click="doLogin">Login</button>
+            <div class="text-end mb-3">
+              <small>
+                <a href="#" @click.prevent="showPasswordReset = true" class="text-primary">Forgot Password?</a>
+              </small>
+            </div>
+            <button 
+              class="btn btn-primary w-100 mb-3" 
+              @click="doLogin"
+              :disabled="authLoading || !loginForm.email || !loginForm.password"
+            >
+              {{ authLoading ? 'Logging in...' : 'Login' }}
+            </button>
+
+            <!-- Divider -->
+            <div class="divider mb-3">
+              <span>OR</span>
+            </div>
+
+            <!-- Google Login Button -->
+            <button 
+              class="btn btn-outline-dark w-100 mb-3 d-flex align-items-center justify-content-center gap-2" 
+              @click="doGoogleLogin"
+              :disabled="authLoading"
+            >
+              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              Continue with Google
+            </button>
+
             <div class="text-center">
               <small class="text-muted">Don't have an account? 
                 <a href="#" @click.prevent="switchAuthMode" class="text-primary">Register here</a>
@@ -59,29 +150,53 @@
           <!-- Register Form -->
           <div v-else>
             <div class="form-floating mb-3">
-              <input type="text" class="form-control" placeholder="Username" v-model="regForm.username" />
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Username" 
+                v-model="regForm.username"
+                :disabled="authLoading"
+              />
               <label>Username</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="email" class="form-control" placeholder="Email" v-model="regForm.email" />
+              <input 
+                type="email" 
+                class="form-control" 
+                placeholder="Email" 
+                v-model="regForm.email"
+                :disabled="authLoading"
+              />
               <label>Email</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="password" class="form-control" placeholder="Password" v-model="regForm.password" />
-              <label>Password</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                placeholder="Password" 
+                v-model="regForm.password"
+                :disabled="authLoading"
+              />
+              <label>Password (min 6 characters)</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="password" class="form-control" placeholder="Confirm Password" v-model="regForm.confirmPassword" />
+              <input 
+                type="password" 
+                class="form-control" 
+                placeholder="Confirm Password" 
+                v-model="regForm.confirmPassword"
+                :disabled="authLoading"
+              />
               <label>Confirm Password</label>
             </div>
             <div class="form-floating mb-3">
-              <select class="form-select" v-model="regForm.gender">
+              <select class="form-select" v-model="regForm.gender" :disabled="authLoading">
                 <option value="" disabled>Select Gender...</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
               </select>
-              <label>Gender</label>
+              <label>Gender (Optional)</label>
             </div>
             <div class="form-floating mb-3">
               <textarea
@@ -90,10 +205,17 @@
                 style="height: 100px"
                 v-model="regForm.reason"
                 maxlength="300"
+                :disabled="authLoading"
               ></textarea>
               <label>Reason for joining (optional)</label>
             </div>
-            <button class="btn btn-success w-100 mb-3" @click="doRegister">Register</button>
+            <button 
+              class="btn btn-success w-100 mb-3" 
+              @click="doRegister"
+              :disabled="authLoading"
+            >
+              {{ authLoading ? 'Creating Account...' : 'Register' }}
+            </button>
             <div class="text-center">
               <small class="text-muted">Already have an account? 
                 <a href="#" @click.prevent="switchAuthMode" class="text-primary">Login here</a>
@@ -107,9 +229,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, provide } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { login, logout as authLogout, isAuthenticated, currentUser } from '@/services/auth'
+// Firebase Authentication
+import { 
+  registerUser, 
+  loginUser, 
+  loginWithGoogle, 
+  logoutUser, 
+  resetPassword,
+  onAuthStateChange 
+} from '@/services/firebaseAuth'
 
 const router = useRouter()
 
@@ -120,9 +251,15 @@ const auth = ref({
 
 const showAuth = ref(false)
 const authError = ref('')
+const authLoading = ref(false)
 const loginForm = ref({ email: '', password: '' })
 const regForm = ref({ username: '', email: '', password: '', confirmPassword: '', gender: '', reason: '' })
 const authMode = ref('login')
+const showPasswordReset = ref(false)
+const resetEmail = ref('')
+
+// Firebase auth state listener unsubscribe function
+let unsubscribeAuth = null
 
 // User storage functions
 const loadUsers = () => {
@@ -144,49 +281,80 @@ const openLogin = () => {
 const closeLogin = () => {
   showAuth.value = false
   authMode.value = 'login'
+  showPasswordReset.value = false
   loginForm.value = { email: '', password: '' }
   regForm.value = { username: '', email: '', password: '', confirmPassword: '', gender: '', reason: '' }
+  resetEmail.value = ''
   authError.value = ''
+  authLoading.value = false
 }
 
-// Perform login
-const doLogin = () => {
+// Perform login with Firebase
+const doLogin = async () => {
   const { email, password } = loginForm.value
+  authError.value = ''
+  authLoading.value = true
 
-  // Check registered users first
-  const users = loadUsers()
-  const user = users.find(u => u.email === email && u.password === password)
-  
-  if (user) {
+  try {
+    // use Firebase to login
+    const userData = await loginUser(email, password)
+    
     auth.value.isAuthenticated = true
-    auth.value.user = { 
-      email: user.email, 
-      username: user.username,
-      role: user.role || 'user',
-      gender: user.gender,
-      reason: user.reason
-    }
-    login(auth.value.user)
+    auth.value.user = userData
+    
+    //localStorage
+    login(userData)
+    
     closeLogin()
-  } else if (email === 'admin@example.com' && password === 'admin123') {
-    // Default admin account
-    auth.value.isAuthenticated = true
-    auth.value.user = { email, username: 'Admin', role: 'admin' }
-    login(auth.value.user)
-    closeLogin()
-  } else if (email === 'demo@example.com' && password === '123456') {
-    // Default demo user account
-    auth.value.isAuthenticated = true
-    auth.value.user = { email, username: 'Demo User', role: 'user' }
-    login(auth.value.user)
-    closeLogin()
-  } else {
-    authError.value = 'Invalid email or password'
+  } catch (error) {
+    authError.value = error.message
+  } finally {
+    authLoading.value = false
   }
 }
 
-// Perform registration
-const doRegister = () => {
+// Google login
+const doGoogleLogin = async () => {
+  authError.value = ''
+  authLoading.value = true
+
+  try {
+    const userData = await loginWithGoogle()
+    
+    auth.value.isAuthenticated = true
+    auth.value.user = userData
+    
+    login(userData)
+    closeLogin()
+  } catch (error) {
+    if (error.message !== 'Login popup was closed.' && error.message !== 'Login cancelled.') {
+      authError.value = error.message
+    }
+  } finally {
+    authLoading.value = false
+  }
+}
+
+// Perform password reset with Firebase
+const doPasswordReset = async () => {
+  authError.value = ''
+  authLoading.value = true
+
+  try {
+    await resetPassword(resetEmail.value)
+    authError.value = ''
+    alert(`Password reset email sent to ${resetEmail.value}. Please check your inbox.`)
+    showPasswordReset.value = false
+    resetEmail.value = ''
+  } catch (error) {
+    authError.value = error.message
+  } finally {
+    authLoading.value = false
+  }
+}
+
+// Perform registration with Firebase
+const doRegister = async () => {
   authError.value = ''
   const { username, email, password, confirmPassword, gender, reason } = regForm.value
   
@@ -210,36 +378,26 @@ const doRegister = () => {
     return
   }
 
-  const users = loadUsers()
-  const exists = users.some(x => x.email.trim().toLowerCase() === email.trim().toLowerCase())
-  if (exists) { 
-    authError.value = 'Email already registered.'
-    return 
-  }
+  authLoading.value = true
 
-  const newUser = { 
-    username: username.trim(), 
-    email: email.trim().toLowerCase(), 
-    password,
-    gender: gender || '',
-    reason: reason || '',
-    role: 'user'
+  try {
+    const userData = await registerUser(email, password, {
+      username: username.trim(),
+      gender: gender || '',
+      reason: reason || ''
+    })
+    
+    // Auto login after registration
+    auth.value.isAuthenticated = true
+    auth.value.user = userData
+    
+    login(userData)
+    closeLogin()
+  } catch (error) {
+    authError.value = error.message
+  } finally {
+    authLoading.value = false
   }
-  
-  users.push(newUser)
-  saveUsers(users)
-  
-  // Auto login after registration
-  auth.value.isAuthenticated = true
-  auth.value.user = { 
-    email: newUser.email, 
-    username: newUser.username,
-    gender: newUser.gender,
-    reason: newUser.reason,
-    role: newUser.role
-  }
-  login(auth.value.user)
-  closeLogin()
 }
 
 // Switch between login and register modes
@@ -249,17 +407,42 @@ const switchAuthMode = () => {
 }
 
 // Logout
-const logout = () => {
-  auth.value.isAuthenticated = false
-  auth.value.user = null
-  authLogout()
-  router.push('/')
+const logout = async () => {
+  try {
+    await logoutUser()
+    auth.value.isAuthenticated = false
+    auth.value.user = null
+    authLogout()
+    router.push('/')
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
 }
 
 // Check authentication status on mount
 onMounted(() => {
+  // Firstcheck localStorage
   auth.value.isAuthenticated = isAuthenticated()
   auth.value.user = currentUser()
+
+  // Then set up the Firebase authentication status listener
+  unsubscribeAuth = onAuthStateChange((user) => {
+    if (user) {
+      auth.value.isAuthenticated = true
+      auth.value.user = user
+      login(user)
+    } else {
+      auth.value.isAuthenticated = false
+      auth.value.user = null
+    }
+  })
+})
+
+// clean listener
+onUnmounted(() => {
+  if (unsubscribeAuth) {
+    unsubscribeAuth()
+  }
 })
 
 // Provide auth to child components
@@ -282,6 +465,8 @@ provide('openLogin', openLogin)
   width: min(480px, 92vw);
   border: none;
   border-radius: 12px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 /* Form Styles */
@@ -299,6 +484,38 @@ provide('openLogin', openLogin)
   box-shadow: 0 0 0 0.2rem rgba(108,117,125,.25);
 }
 
+.form-control:disabled,
+.form-select:disabled {
+  background-color: #e9ecef;
+  opacity: 0.6;
+}
+
+/* Divider Style */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #dee2e6;
+}
+
+.divider span {
+  position: relative;
+  display: inline-block;
+  padding: 0 1rem;
+  background: white;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
 /* Card Styles */
 .card { 
   border: 1px solid #ccc; 
@@ -309,12 +526,66 @@ provide('openLogin', openLogin)
 .card-header {
   background-color: #275FDA;
   color: white;
-  padding: 10px;
+  padding: 10px 16px;
+}
+
+.btn-close-white {
+  filter: brightness(0) invert(1);
 }
 
 .container {
   background-color: #d6e9ff;
   border-radius: 12px;
+}
+
+/* Button Styles */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-outline-dark {
+  border: 2px solid #343a40;
+  font-weight: 500;
+}
+
+.btn-outline-dark:hover {
+  background-color: #343a40;
+  border-color: #343a40;
+}
+
+/* Navigation Link Styles */
+.nav-link.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-link.btn.active {
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.nav-link.btn-outline-success.active {
+  background-color: #198754;
+  color: white !important;
+  border-color: #198754;
+}
+
+.nav-link.btn-outline-info.active {
+  background-color: #0dcaf0;
+  color: white !important;
+  border-color: #0dcaf0;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.3rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-brand:hover {
+  color: #198754 !important;
 }
 
 /* Admin Panel Button Style */
