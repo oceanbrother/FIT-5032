@@ -5,6 +5,7 @@ const TrailsView = () => import('@/views/TrailsView.vue');
 const AdminView = () => import('@/views/AdminView.vue');
 const FirebaseTestView = () => import('@/views/FirebaseTestView.vue');
 const EmailView = () => import('@/views/EmailView.vue');
+const TablesView = () => import('@/views/TablesView.vue');
 
 const routes = [
   { path: '/', redirect: '/trails' },
@@ -12,6 +13,7 @@ const routes = [
   { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true, roles: ['admin'] } },
   { path: '/firebase-test', name: 'firebase-test', component: FirebaseTestView },
   { path: '/email', name: 'email', component: EmailView },
+  { path: '/tables', name: 'tables', component: TablesView },
 ];
 
 const router = createRouter({

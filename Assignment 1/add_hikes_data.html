@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Hiking Trails Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #0d6efd;
+      padding-bottom: 10px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    button {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0b5ed7;
+    }
+    button.danger {
+      background: #dc3545;
+    }
+    button.danger:hover {
+      background: #bb2d3b;
+    }
+    button.success {
+      background: #198754;
+    }
+    button.success:hover {
+      background: #157347;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 400px;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .result.success {
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #badbcc;
+    }
+    .result.error {
+      background: #f8d7da;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏔️ Hiking Trails Data Manager</h1>
+    
+    <div class="section">
+      <h2>Current Data in LocalStorage</h2>
+      <button onclick="showCurrentData()">Show Current Hikes</button>
+      <div id="currentData"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 1: Delete Trail with ID 111</h2>
+      <button class="danger" onclick="deleteTrail111()">Delete Trail ID 111</button>
+      <div id="deleteResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 2: Add Two New Hiking Trails</h2>
+      <button class="success" onclick="addNewTrails()">Add 2 New Trails</button>
+      <div id="addResult"></div>
+      <div id="newTrailsInfo" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 3: Verify Final Data</h2>
+      <button onclick="verifyData()">Show Final Data</button>
+      <div id="verifyResult"></div>
+    </div>
+  </div>
+
+  <script>
+    // New hiking trails to add
+    const newTrails = [
+      {
+        id: 4,
+        name: "Yarra Bend River Walk",
+        location: "Fairfield",
+        difficulty: "Intermediate",
+        distance_km: 6.8,
+        elevation_m: 120,
+        date: "2025-10-18",
+        time: "09:00",
+        capacity: 18,
+        registered: 7
+      },
+      {
+        id: 5,
+        name: "Great Ocean Walk Trail",
+        location: "Apollo Bay",
+        difficulty: "Advanced",
+        distance_km: 12.5,
+        elevation_m: 450,
+        date: "2025-10-25",
+        time: "07:30",
+        capacity: 30,
+        registered: 22
+      }
+    ];
+
+    // Show current data
+    function showCurrentData() {
+      const stored = localStorage.getItem('hikes');
+      const div = document.getElementById('currentData');
+      
+      if (stored) {
+        const hikes = JSON.parse(stored);
+        div.innerHTML = `
+          <div class="result success">
+            <strong>Found ${hikes.length} trails in localStorage:</strong>
+            <pre>${JSON.stringify(hikes, null, 2)}</pre>
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="result error">
+            <strong>No data found in localStorage</strong>
+            <p>The app needs to be run first to populate data.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Delete trail with ID 111
+    function deleteTrail111() {
+      const stored = localStorage.getItem('hikes');
+      const div = document.getElementById('deleteResult');
+      
+      if (!stored) {
+        div.innerHTML = `
+          <div class="result error">
+            <strong>No data found in localStorage</strong>
+          </div>
+        `;
+        return;
+      }
+
+      let hikes = JSON.parse(stored);
+      const originalLength = hikes.length;
+      
+      // Filter out trail with id 111
+      hikes = hikes.filter(h => h.id !== 111);
+      
+      if (hikes.length < originalLength) {
+        localStorage.setItem('hikes', JSON.stringify(hikes));
+        div.innerHTML = `
+          <div class="result success">
+            <strong>✅ Successfully deleted trail with ID 111</strong>
+            <p>Trails remaining: ${hikes.length}</p>
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="result error">
+            <strong>⚠️ Trail with ID 111 not found</strong>
+            <p>Current trails: ${hikes.length}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Add new trails
+    function addNewTrails() {
+      const stored = localStorage.getItem('hikes');
+      const addDiv = document.getElementById('addResult');
+      const infoDiv = document.getElementById('newTrailsInfo');
+      
+      if (!stored) {
+        addDiv.innerHTML = `
+          <div class="result error">
+            <strong>No data found in localStorage</strong>
+          </div>
+        `;
+        return;
+      }
+
+      let hikes = JSON.parse(stored);
+      
+      // Check if trails already exist
+      const existingIds = hikes.map(h => h.id);
+      const newTrailsToAdd = newTrails.filter(t => !existingIds.includes(t.id));
+      
+      if (newTrailsToAdd.length === 0) {
+        addDiv.innerHTML = `
+          <div class="result error">
+            <strong>⚠️ New trails already exist</strong>
+          </div>
+        `;
+        return;
+      }
+
+      // Add new trails
+      hikes.push(...newTrailsToAdd);
+      localStorage.setItem('hikes', JSON.stringify(hikes));
+      
+      addDiv.innerHTML = `
+        <div class="result success">
+          <strong>✅ Successfully added ${newTrailsToAdd.length} new trails</strong>
+          <p>Total trails now: ${hikes.length}</p>
+        </div>
+      `;
+
+      infoDiv.innerHTML = `
+        <div class="result success">
+          <strong>New Trails Added:</strong>
+          <pre>${JSON.stringify(newTrailsToAdd, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // Verify final data
+    function verifyData() {
+      const stored = localStorage.getItem('hikes');
+      const div = document.getElementById('verifyResult');
+      
+      if (stored) {
+        const hikes = JSON.parse(stored);
+        div.innerHTML = `
+          <div class="result success">
+            <strong>✅ Final Data (${hikes.length} trails):</strong>
+            <pre>${JSON.stringify(hikes, null, 2)}</pre>
+            <p style="margin-top: 10px;">
+              <strong>Note:</strong> Refresh your Vue app to see the changes!
+            </p>
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="result error">
+            <strong>No data found</strong>
+          </div>
+        `;
+      }
+    }
+
+    // Auto-show current data on load
+    window.addEventListener('load', () => {
+      showCurrentData();
+    });
+  </script>
+</body>
+</html>

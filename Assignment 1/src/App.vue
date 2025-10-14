@@ -15,6 +15,13 @@
             <i class="bi bi-house-fill me-1"></i>Home
           </router-link>
           <router-link 
+            to="/tables" 
+            class="nav-link btn btn-outline-primary me-2"
+            active-class="active"
+          >
+            <i class="bi bi-table me-1"></i>Data Tables
+          </router-link>
+          <router-link 
             to="/email" 
             class="nav-link btn btn-outline-warning me-2"
             active-class="active"

@@ -9,5 +9,13 @@
 
   { "id":3, "name":"Dandenong Mountain", "location":"Ferntree Gully", "difficulty":"Advanced",
     "distance_km": 4.6, "elevation_m": 290, "date": "2025-10-04", "time":"08:00",
-    "capacity":25, "registered":24 }
+    "capacity":25, "registered":24 },
+
+  { "id":4, "name":"Yarra Bend River Walk", "location":"Fairfield", "difficulty":"Intermediate",
+    "distance_km": 6.8, "elevation_m": 120, "date": "2025-10-18", "time":"09:00",
+    "capacity":18, "registered":7 },
+
+  { "id":5, "name":"Great Ocean Walk Trail", "location":"Apollo Bay", "difficulty":"Advanced",
+    "distance_km": 12.5, "elevation_m": 450, "date": "2025-10-25", "time":"07:30",
+    "capacity":30, "registered":22 }
 ]
