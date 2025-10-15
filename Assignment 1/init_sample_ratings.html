@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Initialize Sample Ratings Data</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 10px 10px 10px 0;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .btn-success {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .output {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .error {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    .info {
+      color: #17a2b8;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 15px 0;
+      color: #856404;
+    }
+    .step {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 4px;
+    }
+    .step h3 {
+      margin-top: 0;
+      color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌟 Initialize Sample Ratings Data</h1>
+    <p class="subtitle">Add sample user ratings and reviews to your hiking trails app</p>
+
+    <div class="warning">
+      <strong>⚠️ 注意：</strong>这将添加示例评分数据到 localStorage 中。如果已有评分数据，将会被追加。
+    </div>
+
+    <div class="step">
+      <h3>Step 1: Check Current Data</h3>
+      <p>查看当前 localStorage 中的评分数据状态</p>
+      <button class="btn" onclick="checkCurrentData()">Check Current Ratings</button>
+    </div>
+
+    <div class="step">
+      <h3>Step 2: Clear All Ratings (Optional)</h3>
+      <p>如果需要重置，可以清除所有现有的评分数据</p>
+      <button class="btn btn-danger" onclick="clearRatings()">Clear All Ratings</button>
+    </div>
+
+    <div class="step">
+      <h3>Step 3: Add Sample Ratings</h3>
+      <p>添加 15 条示例评分和评论数据</p>
+      <button class="btn btn-success" onclick="addSampleRatings()">Add Sample Ratings</button>
+    </div>
+
+    <div class="step">
+      <h3>Step 4: Verify Data</h3>
+      <p>验证数据已成功添加</p>
+      <button class="btn" onclick="verifyData()">Verify Ratings</button>
+    </div>
+
+    <div id="output" class="output" style="display: none;"></div>
+  </div>
+
+  <script>
+    const output = document.getElementById('output');
+
+    function log(message, type = 'info') {
+      output.style.display = 'block';
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+      output.innerHTML += `<div class="${className}">${message}</div>`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clearOutput() {
+      output.innerHTML = '';
+      output.style.display = 'none';
+    }
+
+    function checkCurrentData() {
+      clearOutput();
+      log('🔍 Checking current ratings data...', 'info');
+      
+      try {
+        const ratingsData = localStorage.getItem('trailRatings');
+        
+        if (!ratingsData) {
+          log('❌ No ratings data found in localStorage', 'error');
+          log('💡 You need to add sample data using Step 3', 'info');
+          return;
+        }
+
+        const ratings = JSON.parse(ratingsData);
+        log(`✅ Found ${ratings.length} ratings in localStorage`, 'success');
+        
+        if (ratings.length > 0) {
+          log('\n📊 Rating Summary:', 'info');
+          const trailCounts = {};
+          ratings.forEach(r => {
+            trailCounts[r.trailId] = (trailCounts[r.trailId] || 0) + 1;
+          });
+          
+          Object.entries(trailCounts).forEach(([trailId, count]) => {
+            log(`  Trail ID ${trailId}: ${count} ratings`);
+          });
+          
+          log('\n📝 First 3 ratings:', 'info');
+          ratings.slice(0, 3).forEach((r, i) => {
+            log(`  ${i + 1}. Trail ${r.trailId} - ${r.rating}/5 by ${r.username}`);
+          });
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+
+    function clearRatings() {
+      if (!confirm('Are you sure you want to clear all ratings? This cannot be undone.')) {
+        return;
+      }
+
+      clearOutput();
+      log('🗑️ Clearing all ratings...', 'info');
+      
+      try {
+        localStorage.removeItem('trailRatings');
+        log('✅ All ratings cleared successfully', 'success');
+        log('💡 You can now add sample data using Step 3', 'info');
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+
+    function addSampleRatings() {
+      clearOutput();
+      log('➕ Adding sample ratings data...', 'info');
+
+      // Sample ratings data
+      const sampleRatings = [
+        // Royal Botanic Loop (ID: 1) - 4 ratings
+        {
+          id: Date.now() + Math.random(),
+          trailId: 1,
+          username: 'Sarah M.',
+          rating: 5,
+          comment: 'Beautiful peaceful walk through the gardens. Perfect for a morning stroll!',
+          timestamp: '2025-09-15'
+        },
+        {
+          id: Date.now() + Math.random() + 1,
+          trailId: 1,
+          username: 'John K.',
+          rating: 4,
+          comment: 'Great for families. Well maintained paths and lovely scenery.',
+          timestamp: '2025-09-20'
+        },
+        {
+          id: Date.now() + Math.random() + 2,
+          trailId: 1,
+          username: 'Emma L.',
+          rating: 5,
+          comment: 'Love this trail! So many birds and native plants to see.',
+          timestamp: '2025-10-01'
+        },
+        {
+          id: Date.now() + Math.random() + 3,
+          trailId: 1,
+          username: 'Michael R.',
+          rating: 4,
+          comment: 'Easy walk with great photo opportunities. Highly recommend!',
+          timestamp: '2025-10-10'
+        },
+
+        // Merri Creek Meander (ID: 2) - 3 ratings
+        {
+          id: Date.now() + Math.random() + 4,
+          trailId: 2,
+          username: 'Lisa W.',
+          rating: 4,
+          comment: 'Nice trail following the creek. Good for running or walking.',
+          timestamp: '2025-09-18'
+        },
+        {
+          id: Date.now() + Math.random() + 5,
+          trailId: 2,
+          username: 'David H.',
+          rating: 3,
+          comment: 'Decent trail but can get muddy after rain. Bring proper shoes.',
+          timestamp: '2025-09-25'
+        },
+        {
+          id: Date.now() + Math.random() + 6,
+          trailId: 2,
+          username: 'Rachel T.',
+          rating: 5,
+          comment: 'Hidden gem! Saw so much wildlife including ducks and birds.',
+          timestamp: '2025-10-05'
+        },
+
+        // Dandenong Mountain (ID: 3) - 5 ratings
+        {
+          id: Date.now() + Math.random() + 7,
+          trailId: 3,
+          username: 'James P.',
+          rating: 5,
+          comment: 'Challenging but rewarding! Amazing views from the summit.',
+          timestamp: '2025-10-06'
+        },
+        {
+          id: Date.now() + Math.random() + 8,
+          trailId: 3,
+          username: 'Sophie B.',
+          rating: 4,
+          comment: 'Great workout! The elevation gain is no joke but totally worth it.',
+          timestamp: '2025-10-08'
+        },
+        {
+          id: Date.now() + Math.random() + 9,
+          trailId: 3,
+          username: 'Tom A.',
+          rating: 5,
+          comment: 'Best trail in the Dandenongs! Well marked and maintained.',
+          timestamp: '2025-10-09'
+        },
+        {
+          id: Date.now() + Math.random() + 10,
+          trailId: 3,
+          username: 'Anna C.',
+          rating: 4,
+          comment: 'Beautiful forest walk with some steep sections. Bring water!',
+          timestamp: '2025-10-11'
+        },
+        {
+          id: Date.now() + Math.random() + 11,
+          trailId: 3,
+          username: 'Peter G.',
+          rating: 5,
+          comment: 'Stunning views and fresh mountain air. A must-do trail!',
+          timestamp: '2025-10-13'
+        },
+
+        // Yarra Bend River Walk (ID: 4) - 2 ratings
+        {
+          id: Date.now() + Math.random() + 12,
+          trailId: 4,
+          username: 'Kate S.',
+          rating: 4,
+          comment: 'Beautiful riverside walk. Great for cycling too!',
+          timestamp: '2025-10-12'
+        },
+        {
+          id: Date.now() + Math.random() + 13,
+          trailId: 4,
+          username: 'Mark D.',
+          rating: 3,
+          comment: 'Nice trail but quite busy on weekends. Go early morning.',
+          timestamp: '2025-10-14'
+        },
+
+        // Great Ocean Walk Trail (ID: 5) - 1 rating
+        {
+          id: Date.now() + Math.random() + 14,
+          trailId: 5,
+          username: 'Jennifer L.',
+          rating: 5,
+          comment: 'Epic coastal trail! Spectacular ocean views and challenging terrain.',
+          timestamp: '2025-10-14'
+        }
+      ];
+
+      try {
+        // Get existing ratings
+        const existingData = localStorage.getItem('trailRatings');
+        let ratings = existingData ? JSON.parse(existingData) : [];
+        
+        log(`📊 Current ratings count: ${ratings.length}`, 'info');
+        
+        // Add sample ratings
+        ratings = [...ratings, ...sampleRatings];
+        
+        // Save to localStorage
+        localStorage.setItem('trailRatings', JSON.stringify(ratings));
+        
+        log(`✅ Successfully added ${sampleRatings.length} sample ratings!`, 'success');
+        log(`📊 Total ratings now: ${ratings.length}`, 'success');
+        
+        log('\n📈 Ratings per trail:', 'info');
+        const trailCounts = {};
+        ratings.forEach(r => {
+          trailCounts[r.trailId] = (trailCounts[r.trailId] || 0) + 1;
+        });
+        
+        Object.entries(trailCounts).forEach(([trailId, count]) => {
+          const avgRating = ratings
+            .filter(r => r.trailId === parseInt(trailId))
+            .reduce((sum, r) => sum + r.rating, 0) / count;
+          log(`  Trail ${trailId}: ${count} ratings (avg: ${avgRating.toFixed(1)}/5)`);
+        });
+        
+        log('\n✨ Done! Refresh your Vue app to see the ratings.', 'success');
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+
+    function verifyData() {
+      clearOutput();
+      log('🔍 Verifying ratings data...', 'info');
+      
+      try {
+        const ratingsData = localStorage.getItem('trailRatings');
+        
+        if (!ratingsData) {
+          log('❌ No ratings data found!', 'error');
+          log('💡 Please run Step 3 to add sample data', 'info');
+          return;
+        }
+
+        const ratings = JSON.parse(ratingsData);
+        
+        log(`✅ Total ratings: ${ratings.length}`, 'success');
+        
+        // Verify each trail has ratings
+        log('\n📊 Ratings distribution:', 'info');
+        const trailCounts = {};
+        ratings.forEach(r => {
+          trailCounts[r.trailId] = (trailCounts[r.trailId] || 0) + 1;
+        });
+        
+        for (let i = 1; i <= 5; i++) {
+          const count = trailCounts[i] || 0;
+          const avgRating = count > 0 
+            ? ratings.filter(r => r.trailId === i).reduce((sum, r) => sum + r.rating, 0) / count
+            : 0;
+          
+          const status = count > 0 ? '✅' : '⚠️';
+          log(`  ${status} Trail ${i}: ${count} ratings (avg: ${avgRating.toFixed(1)}/5)`);
+        }
+        
+        // Check data structure
+        log('\n🔍 Data structure check:', 'info');
+        const sampleRating = ratings[0];
+        const requiredFields = ['id', 'trailId', 'username', 'rating', 'comment', 'timestamp'];
+        const hasAllFields = requiredFields.every(field => field in sampleRating);
+        
+        if (hasAllFields) {
+          log('✅ All required fields present', 'success');
+          log(`   Fields: ${requiredFields.join(', ')}`);
+        } else {
+          log('⚠️ Some fields may be missing', 'error');
+        }
+        
+        log('\n✅ Verification complete!', 'success');
+        log('💡 You can now view the ratings in your app\'s Tables page', 'info');
+        
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

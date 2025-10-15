@@ -15,6 +15,13 @@
             <i class="bi bi-house-fill me-1"></i>Home
           </router-link>
           <router-link 
+            to="/map" 
+            class="nav-link btn btn-outline-danger me-2"
+            active-class="active"
+          >
+            <i class="bi bi-map me-1"></i>Trail Map
+          </router-link>
+          <router-link 
             to="/tables" 
             class="nav-link btn btn-outline-primary me-2"
             active-class="active"
