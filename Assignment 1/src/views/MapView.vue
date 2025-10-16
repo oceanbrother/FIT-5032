@@ -4,188 +4,231 @@
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
           <h1 class="h3 mb-0">
-            <i class="bi bi-map me-2"></i>Interactive Trail Map
+            <i class="bi bi-map me-2" aria-hidden="true"></i>Interactive Trail Map
           </h1>
-          <button class="btn btn-secondary btn-sm" @click="$router.push({name:'trails'})">
-            <i class="bi bi-arrow-left me-1"></i> Back to Home
+          <button 
+            class="btn btn-secondary btn-sm" 
+            @click="$router.push({name:'trails'})"
+            aria-label="Go back to trails home page">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Home
           </button>
         </div>
       </div>
     </div>
 
     <!-- Map Controls Card -->
-    <div class="row mb-3">
+    <section class="row mb-3" aria-labelledby="map-controls-heading">
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-body">
+            <h2 id="map-controls-heading" class="sr-only">Map Controls</h2>
             <div class="row g-3">
-              <!-- Search Location -->
+              <!-- Search Location (Geocoding Feature) -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-search me-1"></i>Search Location
+                <label for="geocoder" class="form-label fw-bold">
+                  <i class="bi bi-search me-1" aria-hidden="true"></i>Search Location
                 </label>
-                <div id="geocoder" class="geocoder-container"></div>
-                <small class="text-muted">Search for any place on the map</small>
+                <div 
+                  id="geocoder" 
+                  class="geocoder-container"
+                  role="search"
+                  aria-label="Search for locations on the map"></div>
+                <small class="text-muted" id="geocoder-help">Search for any place on the map</small>
               </div>
 
-              <!-- Directions -->
+              <!-- Directions (Routing Feature) -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">
-                  <i class="bi bi-signpost-2 me-1"></i>Get Directions
-                </label>
-                <div class="d-flex gap-2">
-                  <select 
-                    class="form-select form-select-sm" 
-                    v-model="directionsStart"
-                    @change="clearDirections"
-                  >
-                    <option value="">Select starting point</option>
-                    <option 
-                      v-for="trail in trails" 
-                      :key="'start-' + trail.id" 
-                      :value="trail.id"
+                <fieldset>
+                  <legend class="form-label fw-bold">
+                    <i class="bi bi-signpost-2 me-1" aria-hidden="true"></i>Get Directions
+                  </legend>
+                  <div class="d-flex gap-2">
+                    <label for="directions-start" class="sr-only">Starting point</label>
+                    <select 
+                      id="directions-start"
+                      class="form-select form-select-sm" 
+                      v-model="directionsStart"
+                      @change="clearDirections"
+                      aria-describedby="directions-help"
                     >
-                      {{ trail.name }}
-                    </option>
-                  </select>
-                  <select 
-                    class="form-select form-select-sm" 
-                    v-model="directionsEnd"
-                    @change="clearDirections"
-                  >
-                    <option value="">Select destination</option>
-                    <option 
-                      v-for="trail in trails" 
-                      :key="'end-' + trail.id" 
-                      :value="trail.id"
+                      <option value="">Select starting point</option>
+                      <option 
+                        v-for="trail in trails" 
+                        :key="'start-' + trail.id" 
+                        :value="trail.id"
+                      >
+                        {{ trail.name }}
+                      </option>
+                    </select>
+                    
+                    <label for="directions-end" class="sr-only">Destination</label>
+                    <select 
+                      id="directions-end"
+                      class="form-select form-select-sm" 
+                      v-model="directionsEnd"
+                      @change="clearDirections"
+                      aria-describedby="directions-help"
                     >
-                      {{ trail.name }}
-                    </option>
-                  </select>
-                  <button 
-                    class="btn btn-primary btn-sm" 
-                    @click="getDirections"
-                    :disabled="!directionsStart || !directionsEnd || directionsStart === directionsEnd"
-                  >
-                    <i class="bi bi-arrow-right me-1"></i>Go
-                  </button>
-                </div>
-                <small class="text-muted">Get walking directions between two trails</small>
-                <div v-if="directionsInfo" class="alert alert-info mt-2 py-2 mb-0">
-                  <small>
-                    <strong>Distance:</strong> {{ directionsInfo.distance }} km | 
-                    <strong>Duration:</strong> {{ directionsInfo.duration }} min
-                  </small>
-                </div>
+                      <option value="">Select destination</option>
+                      <option 
+                        v-for="trail in trails" 
+                        :key="'end-' + trail.id" 
+                        :value="trail.id"
+                      >
+                        {{ trail.name }}
+                      </option>
+                    </select>
+                    
+                    <button 
+                      class="btn btn-primary btn-sm" 
+                      @click="getDirections"
+                      :disabled="!directionsStart || !directionsEnd || directionsStart === directionsEnd"
+                      :aria-disabled="!directionsStart || !directionsEnd || directionsStart === directionsEnd"
+                      aria-label="Calculate directions between selected trails"
+                    >
+                      <i class="bi bi-arrow-right me-1" aria-hidden="true"></i>Go
+                    </button>
+                  </div>
+                  <small class="text-muted" id="directions-help">Get walking directions between two trails</small>
+                  <div 
+                    v-if="directionsInfo" 
+                    class="alert alert-info mt-2 py-2 mb-0"
+                    role="status"
+                    aria-live="polite">
+                    <small>
+                      <strong>Distance:</strong> {{ directionsInfo.distance }} km | 
+                      <strong>Duration:</strong> {{ directionsInfo.duration }} min
+                    </small>
+                  </div>
+                </fieldset>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Map Container -->
     <div class="row">
       <div class="col-lg-9">
         <div class="card shadow-sm">
           <div class="card-body p-0">
-            <div id="map" class="map-container"></div>
+            <div 
+              id="map" 
+              class="map-container"
+              role="application"
+              aria-label="Interactive trail map showing hiking locations in Victoria, Australia"
+              tabindex="0"></div>
           </div>
         </div>
       </div>
 
       <!-- Trail List Sidebar -->
       <div class="col-lg-3">
-        <div class="card shadow-sm">
+        <nav class="card shadow-sm" aria-labelledby="trail-list-heading">
           <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-              <i class="bi bi-list-ul me-2"></i>Trail Locations
-            </h5>
+            <h2 id="trail-list-heading" class="mb-0 h5">
+              <i class="bi bi-list-ul me-2" aria-hidden="true"></i>Trail Locations
+            </h2>
           </div>
           <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-              <a 
+            <ul class="list-group list-group-flush" role="list">
+              <li 
                 v-for="trail in trails" 
                 :key="trail.id"
-                href="#"
                 class="list-group-item list-group-item-action"
-                @click.prevent="flyToTrail(trail)"
-              >
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="flex-grow-1">
-                    <h6 class="mb-1">{{ trail.name }}</h6>
-                    <p class="mb-1 text-muted small">
-                      <i class="bi bi-geo-alt me-1"></i>{{ trail.location }}
-                    </p>
-                    <div class="d-flex gap-2 flex-wrap">
-                      <span 
-                        class="badge" 
-                        :class="getDifficultyBadgeClass(trail.difficulty)"
-                      >
-                        {{ trail.difficulty }}
-                      </span>
-                      <span class="badge bg-secondary">
-                        {{ trail.distance_km }} km
-                      </span>
+                role="listitem">
+                <a 
+                  href="#"
+                  @click.prevent="flyToTrail(trail)"
+                  :aria-label="`View ${trail.name} on map, ${trail.difficulty} difficulty, ${trail.distance_km} kilometers`"
+                  class="text-decoration-none d-block">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h3 class="mb-1 h6">{{ trail.name }}</h3>
+                      <p class="mb-1 text-muted small">
+                        <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>
+                        <span class="sr-only">Location: </span>{{ trail.location }}
+                      </p>
+                      <div class="d-flex gap-2 flex-wrap">
+                        <span 
+                          class="badge" 
+                          :class="getDifficultyBadgeClass(trail.difficulty)"
+                          :aria-label="`Difficulty: ${trail.difficulty}`">
+                          {{ trail.difficulty }}
+                        </span>
+                        <span class="badge bg-secondary" :aria-label="`Distance: ${trail.distance_km} kilometers`">
+                          {{ trail.distance_km }} km
+                        </span>
+                      </div>
                     </div>
+                    <i class="bi bi-chevron-right text-muted" aria-hidden="true"></i>
                   </div>
-                  <i class="bi bi-chevron-right text-muted"></i>
-                </div>
-              </a>
-            </div>
+                </a>
+              </li>
+            </ul>
           </div>
-        </div>
+        </nav>
 
         <!-- Map Legend -->
-        <div class="card shadow-sm mt-3">
+        <aside class="card shadow-sm mt-3" aria-labelledby="map-legend-heading">
           <div class="card-header bg-success text-white">
-            <h6 class="mb-0">
-              <i class="bi bi-info-circle me-2"></i>Map Legend
-            </h6>
+            <h2 id="map-legend-heading" class="mb-0 h6">
+              <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Map Legend
+            </h2>
           </div>
           <div class="card-body">
-            <div class="mb-2">
-              <span class="badge bg-success me-2">🟢</span>
-              <small>Easy Trail</small>
-            </div>
-            <div class="mb-2">
-              <span class="badge bg-warning text-dark me-2">🟡</span>
-              <small>Intermediate Trail</small>
-            </div>
-            <div class="mb-2">
-              <span class="badge bg-danger me-2">🔴</span>
-              <small>Advanced Trail</small>
-            </div>
-            <hr>
-            <small class="text-muted">
-              <strong>Map Features:</strong><br>
-              • Click markers for details<br>
-              • Use search to find places<br>
-              • Get directions between trails<br>
-              • Zoom and pan to explore
-            </small>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2">
+                <span class="badge bg-success me-2" aria-hidden="true">🟢</span>
+                <small>Easy Trail</small>
+              </li>
+              <li class="mb-2">
+                <span class="badge bg-warning text-dark me-2" aria-hidden="true">🟡</span>
+                <small>Intermediate Trail</small>
+              </li>
+              <li class="mb-2">
+                <span class="badge bg-danger me-2" aria-hidden="true">🔴</span>
+                <small>Advanced Trail</small>
+              </li>
+            </ul>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
 
-    <!-- Info Alert -->
-    <div class="row mt-3">
+    <!-- Map Features Info -->
+    <section class="row mt-3" aria-labelledby="map-features-heading">
       <div class="col-12">
-        <div class="alert alert-info" role="alert">
-          <h6 class="alert-heading">
-            <i class="bi bi-lightbulb me-2"></i>Map Features
-          </h6>
-          <ul class="mb-0 small">
-            <li><strong>Interactive Markers:</strong> Click on any trail marker to see details</li>
-            <li><strong>Location Search:</strong> Use the search box to find any place in the world</li>
-            <li><strong>Directions:</strong> Select two trails to get walking directions and distance</li>
-            <li><strong>Geocoding:</strong> Search converts place names to coordinates automatically</li>
-            <li><strong>Routing:</strong> Calculates actual walking paths between locations</li>
-          </ul>
+        <div class="alert alert-info" role="region" aria-labelledby="map-features-heading">
+          <h2 id="map-features-heading" class="alert-heading h6">
+            <i class="bi bi-lightbulb me-2" aria-hidden="true"></i>Map Features
+          </h2>
+          <div class="row">
+            <div class="col-md-6">
+              <h3 class="h6 mb-2"><i class="bi bi-search me-1" aria-hidden="true"></i>Feature 1: Geocoding (Location Search)</h3>
+              <ul class="mb-3 small">
+                <li><strong>Purpose:</strong> Find any place in the world</li>
+                <li><strong>How to use:</strong> Type a location name in the search box above</li>
+                <li><strong>Technology:</strong> Automatically converts place names to coordinates</li>
+                <li><strong>Example:</strong> Search for "Melbourne CBD" or any address</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h3 class="h6 mb-2"><i class="bi bi-signpost-2 me-1" aria-hidden="true"></i>Feature 2: Routing (Directions)</h3>
+              <ul class="mb-3 small">
+                <li><strong>Purpose:</strong> Get walking directions between trails</li>
+                <li><strong>How to use:</strong> Select start and end points, then click "Go"</li>
+                <li><strong>Technology:</strong> Calculates actual walking paths with distance and time</li>
+                <li><strong>Example:</strong> Get directions from one trail to another</li>
+              </ul>
+            </div>
+          </div>
+          <hr class="my-2">
+          <p class="mb-0 small"><strong>Additional Features:</strong> Click markers for trail details • Zoom and pan to explore • Use fullscreen mode</p>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -307,6 +350,9 @@ const addTrailMarkers = () => {
       // Create custom marker
       const el = document.createElement('div')
       el.className = 'custom-marker'
+      el.setAttribute('role', 'button')
+      el.setAttribute('aria-label', `${trail.name} - ${trail.difficulty} trail marker. Click to view details.`)
+      el.setAttribute('tabindex', '0')
       el.style.backgroundColor = getMarkerColor(trail.difficulty)
       el.style.width = '30px'
       el.style.height = '30px'
@@ -315,23 +361,50 @@ const addTrailMarkers = () => {
       el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
       el.style.cursor = 'pointer'
 
-      // Create popup content
+      // Create popup content with proper structure
       const popupContent = `
-        <div class="trail-popup">
-          <h6 class="mb-2">${trail.name}</h6>
-          <p class="mb-1 small"><strong>Location:</strong> ${trail.location}</p>
-          <p class="mb-1 small"><strong>Difficulty:</strong> 
-            <span class="badge ${getDifficultyBadgeClass(trail.difficulty)}">${trail.difficulty}</span>
-          </p>
-          <p class="mb-1 small"><strong>Distance:</strong> ${trail.distance_km} km</p>
-          <p class="mb-1 small"><strong>Elevation:</strong> ${trail.elevation_m} m</p>
-          ${trail.date ? `<p class="mb-1 small"><strong>Date:</strong> ${trail.date}</p>` : ''}
-          <p class="mb-0 small"><strong>Capacity:</strong> ${trail.registered || 0}/${trail.capacity || 0}</p>
+        <div class="trail-popup" role="dialog" aria-label="Trail details for ${trail.name}">
+          <h3 class="mb-2 h6">${trail.name}</h3>
+          <dl class="mb-0 small">
+            <dt class="sr-only">Location</dt>
+            <dd class="mb-1"><strong>Location:</strong> ${trail.location}</dd>
+            
+            <dt class="sr-only">Difficulty</dt>
+            <dd class="mb-1"><strong>Difficulty:</strong> 
+              <span class="badge ${getDifficultyBadgeClass(trail.difficulty)}">${trail.difficulty}</span>
+            </dd>
+            
+            <dt class="sr-only">Distance</dt>
+            <dd class="mb-1"><strong>Distance:</strong> ${trail.distance_km} km</dd>
+            
+            <dt class="sr-only">Elevation</dt>
+            <dd class="mb-1"><strong>Elevation:</strong> ${trail.elevation_m} m</dd>
+            
+            ${trail.date ? `
+              <dt class="sr-only">Date</dt>
+              <dd class="mb-1"><strong>Date:</strong> ${trail.date}</dd>
+            ` : ''}
+            
+            <dt class="sr-only">Capacity</dt>
+            <dd class="mb-0"><strong>Capacity:</strong> ${trail.registered || 0}/${trail.capacity || 0}</dd>
+          </dl>
         </div>
       `
 
-      const popup = new mapboxgl.Popup({ offset: 25 })
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false
+      })
         .setHTML(popupContent)
+      
+      // Add keyboard support for marker
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          marker.togglePopup()
+        }
+      })
 
       const marker = new mapboxgl.Marker(el)
         .setLngLat([trail.coordinates.lng, trail.coordinates.lat])

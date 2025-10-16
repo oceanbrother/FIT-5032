@@ -1,105 +1,182 @@
 <template>
   <div>
+    <!-- Skip to main content link for keyboard users -->
+    <a href="#main-content" class="skip-link" @click="skipToMain">
+      Skip to main content
+    </a>
+
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <nav 
+      class="navbar navbar-expand-lg navbar-light bg-light mb-4" 
+      role="navigation" 
+      aria-label="Main navigation">
       <div class="container">
-        <router-link to="/" class="navbar-brand" style="cursor: pointer; text-decoration: none;">
+        <router-link 
+          to="/" 
+          class="navbar-brand" 
+          style="cursor: pointer; text-decoration: none;"
+          aria-label="Hiking Trails home page">
           Hiking Trails
         </router-link>
-        <div class="navbar-nav ms-auto">
+        <div class="navbar-nav ms-auto" role="menubar">
           <router-link 
             to="/trails" 
             class="nav-link btn btn-outline-success me-2"
             active-class="active"
-          >
-            <i class="bi bi-house-fill me-1"></i>Home
+            role="menuitem"
+            :aria-current="$route.path === '/trails' ? 'page' : undefined"
+            aria-label="Home - View all hiking trails">
+            <i class="bi bi-house-fill me-1" aria-hidden="true"></i>Home
           </router-link>
           <router-link 
             to="/map" 
             class="nav-link btn btn-outline-danger me-2"
             active-class="active"
-          >
-            <i class="bi bi-map me-1"></i>Trail Map
+            role="menuitem"
+            :aria-current="$route.path === '/map' ? 'page' : undefined"
+            aria-label="Trail Map - View trails on interactive map">
+            <i class="bi bi-map me-1" aria-hidden="true"></i>Trail Map
           </router-link>
           <router-link 
             to="/tables" 
             class="nav-link btn btn-outline-primary me-2"
             active-class="active"
-          >
-            <i class="bi bi-table me-1"></i>Data Tables
+            role="menuitem"
+            :aria-current="$route.path === '/tables' ? 'page' : undefined"
+            aria-label="Data Tables - View trail and rating data">
+            <i class="bi bi-table me-1" aria-hidden="true"></i>Data Tables
           </router-link>
           <router-link 
             to="/email" 
             class="nav-link btn btn-outline-warning me-2"
             active-class="active"
-          >
-            <i class="bi bi-envelope-fill me-1"></i>Send Email
+            role="menuitem"
+            :aria-current="$route.path === '/email' ? 'page' : undefined"
+            aria-label="Send Email - Contact trail organizers">
+            <i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>Send Email
           </router-link>
           <router-link 
             to="/firebase-test" 
             class="nav-link btn btn-outline-info me-2"
             active-class="active"
-          >
-            <i class="bi bi-gear me-1"></i>Firebase Test
+            role="menuitem"
+            :aria-current="$route.path === '/firebase-test' ? 'page' : undefined"
+            aria-label="Firebase Test - Testing page">
+            <i class="bi bi-gear me-1" aria-hidden="true"></i>Firebase Test
           </router-link>
           <router-link 
             v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 
             to="/admin" 
             class="nav-link btn btn-outline-primary me-2 admin-panel-btn"
             active-class="active"
-          >
-            <i class="bi bi-gear-fill me-1"></i>Admin Panel
+            role="menuitem"
+            :aria-current="$route.path === '/admin' ? 'page' : undefined"
+            aria-label="Admin Panel - Manage trails and users">
+            <i class="bi bi-gear-fill me-1" aria-hidden="true"></i>Admin Panel
           </router-link>
-          <span v-if="auth.isAuthenticated" class="nav-link">
+          <span 
+            v-if="auth.isAuthenticated" 
+            class="nav-link"
+            role="status"
+            :aria-label="`Logged in as ${auth.user.username || auth.user.email}${auth.user?.role ? ', role: ' + auth.user.role : ''}`">
             Hello, {{ auth.user.username || auth.user.email }}
-            <span v-if="auth.user?.role" class="badge bg-primary ms-1">{{ auth.user.role }}</span>
+            <span v-if="auth.user?.role" class="badge bg-primary ms-1" aria-label="User role">{{ auth.user.role }}</span>
           </span>
-          <button v-if="auth.isAuthenticated" @click="logout" class="btn btn-sm btn-outline-secondary ms-2">
+          <button 
+            v-if="auth.isAuthenticated" 
+            @click="logout" 
+            class="btn btn-sm btn-outline-secondary ms-2"
+            aria-label="Logout from your account">
             Logout
           </button>
-          <button v-else @click="openLogin" class="btn btn-sm btn-primary ms-2">
+          <button 
+            v-else 
+            ref="loginButtonRef"
+            @click="openLogin" 
+            class="btn btn-sm btn-primary ms-2"
+            aria-label="Login to your account">
             Login
           </button>
         </div>
       </div>
     </nav>
 
-    <!-- Router View -->
-    <router-view></router-view>
+    <!-- Router View (Main Content) -->
+    <div id="main-content" ref="mainContent" tabindex="-1" role="main">
+      <router-view></router-view>
+    </div>
 
     <!-- Login and Register Modal -->
-    <div v-if="showAuth" class="auth-backdrop" @click.self="closeLogin">
-      <div class="auth-modal card shadow-lg">
+    <div 
+      v-if="showAuth" 
+      class="auth-backdrop" 
+      @click.self="closeLogin"
+      @keydown.esc="closeLogin">
+      <div 
+        ref="modalRef"
+        class="auth-modal card shadow-lg"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="showPasswordReset ? 'modal-title-reset' : (authMode === 'login' ? 'modal-title-login' : 'modal-title-register')"
+        @keydown="handleModalKeydown">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>{{ showPasswordReset ? 'Reset Password' : (authMode === 'login' ? 'Login' : 'Register') }}</strong>
-          <button @click="closeLogin" class="btn-close btn-close-white" aria-label="Close"></button>
+          <strong 
+            :id="showPasswordReset ? 'modal-title-reset' : (authMode === 'login' ? 'modal-title-login' : 'modal-title-register')">
+            {{ showPasswordReset ? 'Reset Password' : (authMode === 'login' ? 'Login' : 'Register') }}
+          </strong>
+          <button 
+            ref="closeButtonRef"
+            @click="closeLogin" 
+            class="btn-close btn-close-white" 
+            aria-label="Close dialog">
+          </button>
         </div>
         <div class="card-body">
-          <div v-if="authError" class="alert alert-danger py-2">{{ authError }}</div>
+          <!-- Error alert with role for screen readers -->
+          <div 
+            v-if="authError" 
+            class="alert alert-danger py-2" 
+            role="alert"
+            aria-live="assertive">
+            <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
+            {{ authError }}
+          </div>
           
           <!-- Password Reset Form -->
           <div v-if="showPasswordReset">
-            <p class="text-muted mb-3">Enter your email address and we'll send you a link to reset your password.</p>
+            <p class="text-muted mb-3" id="reset-instructions">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
             <div class="form-floating mb-3">
               <input 
+                id="reset-email"
+                ref="resetEmailRef"
                 type="email" 
                 class="form-control" 
                 placeholder="Email" 
                 v-model="resetEmail"
                 :disabled="authLoading"
+                aria-required="true"
+                aria-describedby="reset-instructions"
               />
-              <label>Email</label>
+              <label for="reset-email">Email</label>
             </div>
             <button 
               class="btn btn-primary w-100 mb-3" 
               @click="doPasswordReset"
               :disabled="authLoading || !resetEmail"
-            >
+              :aria-busy="authLoading">
               {{ authLoading ? 'Sending...' : 'Send Reset Link' }}
             </button>
             <div class="text-center">
               <small class="text-muted">
-                <a href="#" @click.prevent="showPasswordReset = false" class="text-primary">Back to Login</a>
+                <a 
+                  href="#" 
+                  @click.prevent="showPasswordReset = false" 
+                  class="text-primary"
+                  aria-label="Go back to login form">
+                  Back to Login
+                </a>
               </small>
             </div>
           </div>
@@ -108,41 +185,52 @@
           <div v-else-if="authMode === 'login'">
             <div class="form-floating mb-3">
               <input 
+                id="login-email"
+                ref="loginEmailRef"
                 type="email" 
                 class="form-control" 
                 placeholder="Email" 
                 v-model="loginForm.email"
                 :disabled="authLoading"
                 @keyup.enter="doLogin"
+                aria-required="true"
               />
-              <label>Email</label>
+              <label for="login-email">Email</label>
             </div>
             <div class="form-floating mb-3">
               <input 
+                id="login-password"
                 type="password" 
                 class="form-control" 
                 placeholder="Password" 
                 v-model="loginForm.password"
                 :disabled="authLoading"
                 @keyup.enter="doLogin"
+                aria-required="true"
               />
-              <label>Password</label>
+              <label for="login-password">Password</label>
             </div>
             <div class="text-end mb-3">
               <small>
-                <a href="#" @click.prevent="showPasswordReset = true" class="text-primary">Forgot Password?</a>
+                <a 
+                  href="#" 
+                  @click.prevent="showPasswordReset = true" 
+                  class="text-primary"
+                  aria-label="Forgot your password? Reset it">
+                  Forgot Password?
+                </a>
               </small>
             </div>
             <button 
               class="btn btn-primary w-100 mb-3" 
               @click="doLogin"
               :disabled="authLoading || !loginForm.email || !loginForm.password"
-            >
+              :aria-busy="authLoading">
               {{ authLoading ? 'Logging in...' : 'Login' }}
             </button>
 
             <!-- Divider -->
-            <div class="divider mb-3">
+            <div class="divider mb-3" role="separator" aria-label="or">
               <span>OR</span>
             </div>
 
@@ -151,8 +239,9 @@
               class="btn btn-outline-dark w-100 mb-3 d-flex align-items-center justify-content-center gap-2" 
               @click="doGoogleLogin"
               :disabled="authLoading"
-            >
-              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+              :aria-busy="authLoading"
+              aria-label="Continue with Google">
+              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                 <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                 <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -163,7 +252,13 @@
 
             <div class="text-center">
               <small class="text-muted">Don't have an account? 
-                <a href="#" @click.prevent="switchAuthMode" class="text-primary">Register here</a>
+                <a 
+                  href="#" 
+                  @click.prevent="switchAuthMode" 
+                  class="text-primary"
+                  aria-label="Switch to registration form">
+                  Register here
+                </a>
               </small>
             </div>
           </div>
@@ -172,74 +267,102 @@
           <div v-else>
             <div class="form-floating mb-3">
               <input 
+                id="reg-username"
+                ref="regUsernameRef"
                 type="text" 
                 class="form-control" 
                 placeholder="Username" 
                 v-model="regForm.username"
                 :disabled="authLoading"
+                aria-required="true"
+                aria-describedby="username-help"
               />
-              <label>Username</label>
+              <label for="reg-username">Username</label>
+              <small id="username-help" class="form-text text-muted">Minimum 3 characters</small>
             </div>
             <div class="form-floating mb-3">
               <input 
+                id="reg-email"
                 type="email" 
                 class="form-control" 
                 placeholder="Email" 
                 v-model="regForm.email"
                 :disabled="authLoading"
+                aria-required="true"
               />
-              <label>Email</label>
+              <label for="reg-email">Email</label>
             </div>
             <div class="form-floating mb-3">
               <input 
+                id="reg-password"
                 type="password" 
                 class="form-control" 
                 placeholder="Password" 
                 v-model="regForm.password"
                 :disabled="authLoading"
+                aria-required="true"
+                aria-describedby="password-help"
               />
-              <label>Password (min 6 characters)</label>
+              <label for="reg-password">Password</label>
+              <small id="password-help" class="form-text text-muted">Minimum 6 characters</small>
             </div>
             <div class="form-floating mb-3">
               <input 
+                id="reg-confirm-password"
                 type="password" 
                 class="form-control" 
                 placeholder="Confirm Password" 
                 v-model="regForm.confirmPassword"
                 :disabled="authLoading"
+                aria-required="true"
               />
-              <label>Confirm Password</label>
+              <label for="reg-confirm-password">Confirm Password</label>
             </div>
             <div class="form-floating mb-3">
-              <select class="form-select" v-model="regForm.gender" :disabled="authLoading">
+              <select 
+                id="reg-gender"
+                class="form-select" 
+                v-model="regForm.gender" 
+                :disabled="authLoading"
+                aria-label="Select your gender (optional)">
                 <option value="" disabled>Select Gender...</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
               </select>
-              <label>Gender (Optional)</label>
+              <label for="reg-gender">Gender (Optional)</label>
             </div>
             <div class="form-floating mb-3">
               <textarea
+                id="reg-reason"
                 class="form-control"
                 placeholder="Tell us why you want to join hiking activities"
                 style="height: 100px"
                 v-model="regForm.reason"
                 maxlength="300"
                 :disabled="authLoading"
+                aria-label="Tell us why you want to join hiking activities (optional)"
+                aria-describedby="reason-help"
               ></textarea>
-              <label>Reason for joining (optional)</label>
+              <label for="reg-reason">Reason for joining (optional)</label>
+              <small id="reason-help" class="form-text text-muted">Maximum 300 characters</small>
             </div>
             <button 
               class="btn btn-success w-100 mb-3" 
               @click="doRegister"
               :disabled="authLoading"
-            >
+              :aria-busy="authLoading">
               {{ authLoading ? 'Creating Account...' : 'Register' }}
             </button>
             <div class="text-center">
               <small class="text-muted">Already have an account? 
-                <a href="#" @click.prevent="switchAuthMode" class="text-primary">Login here</a>
+                <a 
+                  href="#" 
+                  @click.prevent="switchAuthMode" 
+                  class="text-primary"
+                  aria-label="Switch to login form">
+                  Login here
+                </a>
               </small>
             </div>
           </div>
@@ -250,7 +373,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from 'vue'
+import { ref, onMounted, onUnmounted, provide, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { login, logout as authLogout, isAuthenticated, currentUser } from '@/services/auth'
 // Firebase Authentication
@@ -279,8 +402,20 @@ const authMode = ref('login')
 const showPasswordReset = ref(false)
 const resetEmail = ref('')
 
+// Refs for accessibility
+const mainContent = ref(null)
+const loginButtonRef = ref(null)
+const modalRef = ref(null)
+const closeButtonRef = ref(null)
+const loginEmailRef = ref(null)
+const regUsernameRef = ref(null)
+const resetEmailRef = ref(null)
+
 // Firebase auth state listener unsubscribe function
 let unsubscribeAuth = null
+
+// Store the element that triggered modal opening for focus return
+let modalTriggerElement = null
 
 // User storage functions
 const loadUsers = () => {
@@ -292,8 +427,59 @@ const saveUsers = (users) => {
   localStorage.setItem('hikeUsers', JSON.stringify(users))
 }
 
+// Skip to main content function
+const skipToMain = (e) => {
+  e.preventDefault()
+  mainContent.value?.focus()
+  mainContent.value?.scrollIntoView({ behavior: 'smooth' })
+}
+
+// Focus trap for modal
+const handleModalKeydown = (e) => {
+  if (e.key === 'Escape') {
+    closeLogin()
+    return
+  }
+
+  // Tab key handling for focus trap
+  if (e.key === 'Tab' && modalRef.value) {
+    const focusableElements = modalRef.value.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const focusableArray = Array.from(focusableElements).filter(
+      el => !el.disabled && el.offsetParent !== null
+    )
+    
+    if (focusableArray.length === 0) return
+
+    const firstElement = focusableArray[0]
+    const lastElement = focusableArray[focusableArray.length - 1]
+
+    if (e.shiftKey) {
+      // Shift + Tab
+      if (document.activeElement === firstElement) {
+        e.preventDefault()
+        lastElement?.focus()
+      }
+    } else {
+      // Tab
+      if (document.activeElement === lastElement) {
+        e.preventDefault()
+        firstElement?.focus()
+      }
+    }
+  }
+}
+
 // Open login box
-const openLogin = () => {
+const openLogin = (e) => {
+  // Store the trigger element for focus return
+  if (e && e.target) {
+    modalTriggerElement = e.target
+  } else {
+    modalTriggerElement = loginButtonRef.value
+  }
+  
   showAuth.value = true
   authError.value = ''
 }
@@ -308,6 +494,14 @@ const closeLogin = () => {
   resetEmail.value = ''
   authError.value = ''
   authLoading.value = false
+  
+  // Return focus to the trigger element
+  nextTick(() => {
+    if (modalTriggerElement) {
+      modalTriggerElement.focus()
+      modalTriggerElement = null
+    }
+  })
 }
 
 // Perform login with Firebase
@@ -425,7 +619,44 @@ const doRegister = async () => {
 const switchAuthMode = () => {
   authMode.value = authMode.value === 'login' ? 'register' : 'login'
   authError.value = ''
+  
+  // Focus first input when switching modes
+  nextTick(() => {
+    if (authMode.value === 'login') {
+      loginEmailRef.value?.focus()
+    } else {
+      regUsernameRef.value?.focus()
+    }
+  })
 }
+
+// Watch for modal and form changes to manage focus
+watch(showAuth, (newValue) => {
+  if (newValue) {
+    // Modal opened - set focus and prevent body scroll
+    document.body.style.overflow = 'hidden'
+    nextTick(() => {
+      if (showPasswordReset.value) {
+        resetEmailRef.value?.focus()
+      } else if (authMode.value === 'login') {
+        loginEmailRef.value?.focus()
+      } else {
+        regUsernameRef.value?.focus()
+      }
+    })
+  } else {
+    // Modal closed - restore body scroll
+    document.body.style.overflow = ''
+  }
+})
+
+watch(showPasswordReset, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      resetEmailRef.value?.focus()
+    })
+  }
+})
 
 // Logout
 const logout = async () => {
@@ -472,6 +703,50 @@ provide('openLogin', openLogin)
 </script>
 
 <style scoped>
+/* Accessibility Styles */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #0d6efd;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0 0 4px 0;
+  font-weight: 600;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Main content focus style */
+#main-content:focus {
+  outline: none;
+}
+
+/* Improved focus styles for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Form helper text */
+.form-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+}
+
 /* Popup Window Style */
 .auth-backdrop {
   position: fixed; 

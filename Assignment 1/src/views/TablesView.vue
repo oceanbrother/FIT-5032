@@ -1,43 +1,48 @@
 <template>
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1 class="h3">Interactive Data Tables</h1>
-      <button class="btn btn-secondary btn-sm" @click="$router.push({name:'trails'})">
-        <i class="bi bi-arrow-left me-1"></i> Back to Home
+      <h1 class="h3">
+        <i class="bi bi-table me-2" aria-hidden="true"></i>Interactive Data Tables
+      </h1>
+      <button 
+        class="btn btn-secondary btn-sm" 
+        @click="$router.push({name:'trails'})"
+        aria-label="Go back to trails home page">
+        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Home
       </button>
     </div>
 
     <!-- Table 1: Hiking Trails -->
-    <div class="card mb-4 shadow-sm">
+    <section class="card mb-4 shadow-sm" aria-labelledby="trails-table-heading">
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">
-          <i class="bi bi-table me-2"></i>Hiking Trails Data Table
+        <h2 id="trails-table-heading" class="h5 mb-0">
+          <i class="bi bi-table me-2" aria-hidden="true"></i>Hiking Trails Data Table
         </h2>
         <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-light text-dark">{{ trails.length }} trails</span>
-          <div class="btn-group btn-group-sm" role="group" aria-label="Export options">
+          <span class="badge bg-light text-dark" role="status" aria-live="polite">
+            {{ trails.length }} trails
+          </span>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Export trails data">
             <button 
               type="button" 
               class="btn btn-light" 
               @click="exportTrailsToCSV"
-              title="Export to CSV"
-            >
-              <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+              aria-label="Export trails data to CSV format">
+              <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i>CSV
             </button>
             <button 
               type="button" 
               class="btn btn-light" 
               @click="exportTrailsToPDF"
-              title="Export to PDF"
-            >
-              <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+              aria-label="Export trails data to PDF format">
+              <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>PDF
             </button>
           </div>
         </div>
       </div>
       <div class="card-body">
-        <p class="text-muted small mb-3">
-          <i class="bi bi-info-circle me-1"></i>
+        <p class="text-muted small mb-3" role="note">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
           Features: Sort by any column, search globally or by specific column, paginate 10 rows per page
         </p>
         
@@ -56,39 +61,42 @@
           <!-- Header slots for column-specific search -->
           <template #header-name="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`trail-name-search`" class="filter-label">{{ header.text }}</label>
               <input 
+                :id="`trail-name-search`"
                 type="text" 
                 class="form-control form-control-sm"
                 placeholder="Search name..."
                 @input="updateSearch('name', $event.target.value)"
-                aria-label="Search by trail name"
+                aria-label="Search trails by name"
               />
             </div>
           </template>
 
           <template #header-location="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`trail-location-search`" class="filter-label">{{ header.text }}</label>
               <input 
+                :id="`trail-location-search`"
                 type="text" 
                 class="form-control form-control-sm"
                 placeholder="Search location..."
                 @input="updateSearch('location', $event.target.value)"
-                aria-label="Search by location"
+                aria-label="Search trails by location"
               />
             </div>
           </template>
 
           <template #header-difficulty="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`trail-difficulty-filter`" class="filter-label">{{ header.text }}</label>
               <select 
+                :id="`trail-difficulty-filter`"
                 class="form-select form-select-sm"
                 @change="updateSearch('difficulty', $event.target.value)"
-                aria-label="Filter by difficulty"
+                aria-label="Filter trails by difficulty level"
               >
-                <option value="">All</option>
+                <option value="">All difficulties</option>
                 <option value="Easy">Easy</option>
                 <option value="Intermediate">Intermediate</option>
                 <option value="Advanced">Advanced</option>
@@ -98,33 +106,47 @@
 
           <!-- Custom cell rendering -->
           <template #item-difficulty="{ difficulty }">
-            <span class="badge" :class="getDifficultyBadgeClass(difficulty)">
+            <span 
+              class="badge" 
+              :class="getDifficultyBadgeClass(difficulty)"
+              role="status"
+              :aria-label="`Difficulty level: ${difficulty}`">
               {{ difficulty }}
             </span>
           </template>
 
           <template #item-distance_km="{ distance_km }">
-            <span v-if="distance_km">{{ distance_km }} km</span>
-            <span v-else class="text-muted">—</span>
+            <span v-if="distance_km" :aria-label="`Distance: ${distance_km} kilometers`">
+              {{ distance_km }} km
+            </span>
+            <span v-else class="text-muted" aria-label="Distance not available">—</span>
           </template>
 
           <template #item-elevation_m="{ elevation_m }">
-            <span v-if="elevation_m">{{ elevation_m }} m</span>
-            <span v-else class="text-muted">—</span>
+            <span v-if="elevation_m" :aria-label="`Elevation gain: ${elevation_m} meters`">
+              {{ elevation_m }} m
+            </span>
+            <span v-else class="text-muted" aria-label="Elevation not available">—</span>
           </template>
 
           <template #item-capacity="{ capacity, registered }">
             <div class="d-flex align-items-center gap-2">
-              <span>{{ registered || 0 }} / {{ capacity || 0 }}</span>
-              <div class="progress" style="width: 60px; height: 6px;">
+              <span class="sr-only">
+                {{ registered || 0 }} out of {{ capacity || 0 }} spots registered
+              </span>
+              <span aria-hidden="true">{{ registered || 0 }} / {{ capacity || 0 }}</span>
+              <div 
+                class="progress" 
+                style="width: 60px; height: 6px;"
+                role="progressbar"
+                :aria-label="`Registration capacity: ${getCapacityPercentage(registered, capacity)}% full`"
+                :aria-valuenow="getCapacityPercentage(registered, capacity)"
+                aria-valuemin="0"
+                aria-valuemax="100">
                 <div 
                   class="progress-bar" 
                   :class="getCapacityClass(registered, capacity)"
                   :style="{ width: getCapacityPercentage(registered, capacity) + '%' }"
-                  role="progressbar"
-                  :aria-valuenow="getCapacityPercentage(registered, capacity)"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
                 ></div>
               </div>
             </div>
@@ -132,46 +154,50 @@
 
           <template #item-rating="item">
             <div class="d-flex align-items-center gap-1">
-              <i class="bi bi-star-fill text-warning"></i>
-              <strong>{{ getAverageRating(item.id).toFixed(1) }}</strong>
-              <small class="text-muted">({{ getRatingCount(item.id) }})</small>
+              <span class="sr-only">
+                Average rating: {{ getAverageRating(item.id).toFixed(1) }} out of 5 stars, 
+                based on {{ getRatingCount(item.id) }} reviews
+              </span>
+              <i class="bi bi-star-fill text-warning" aria-hidden="true"></i>
+              <strong aria-hidden="true">{{ getAverageRating(item.id).toFixed(1) }}</strong>
+              <small class="text-muted" aria-hidden="true">({{ getRatingCount(item.id) }})</small>
             </div>
           </template>
         </EasyDataTable>
       </div>
-    </div>
+    </section>
 
     <!-- Table 2: User Ratings & Reviews -->
-    <div class="card shadow-sm">
+    <section class="card shadow-sm" aria-labelledby="ratings-table-heading">
       <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">
-          <i class="bi bi-star-fill me-2"></i>User Ratings & Reviews Data Table
+        <h2 id="ratings-table-heading" class="h5 mb-0">
+          <i class="bi bi-star-fill me-2" aria-hidden="true"></i>User Ratings & Reviews Data Table
         </h2>
         <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-light text-dark">{{ ratings.length }} ratings</span>
-          <div class="btn-group btn-group-sm" role="group" aria-label="Export options">
+          <span class="badge bg-light text-dark" role="status" aria-live="polite">
+            {{ ratings.length }} ratings
+          </span>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Export ratings data">
             <button 
               type="button" 
               class="btn btn-light" 
               @click="exportRatingsToCSV"
-              title="Export to CSV"
-            >
-              <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+              aria-label="Export ratings data to CSV format">
+              <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i>CSV
             </button>
             <button 
               type="button" 
               class="btn btn-light" 
               @click="exportRatingsToPDF"
-              title="Export to PDF"
-            >
-              <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+              aria-label="Export ratings data to PDF format">
+              <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>PDF
             </button>
           </div>
         </div>
       </div>
       <div class="card-body">
-        <p class="text-muted small mb-3">
-          <i class="bi bi-info-circle me-1"></i>
+        <p class="text-muted small mb-3" role="note">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
           Features: Sort by any column, search by trail name or username, paginate 10 rows per page
         </p>
 
@@ -190,37 +216,40 @@
           <!-- Header slots for column-specific search -->
           <template #header-trailName="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`rating-trail-search`" class="filter-label">{{ header.text }}</label>
               <input 
+                :id="`rating-trail-search`"
                 type="text" 
                 class="form-control form-control-sm"
                 placeholder="Search trail..."
                 @input="updateRatingSearch('trailName', $event.target.value)"
-                aria-label="Search by trail name"
+                aria-label="Search ratings by trail name"
               />
             </div>
           </template>
 
           <template #header-username="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`rating-user-search`" class="filter-label">{{ header.text }}</label>
               <input 
+                :id="`rating-user-search`"
                 type="text" 
                 class="form-control form-control-sm"
                 placeholder="Search user..."
                 @input="updateRatingSearch('username', $event.target.value)"
-                aria-label="Search by username"
+                aria-label="Search ratings by username"
               />
             </div>
           </template>
 
           <template #header-rating="header">
             <div class="filter-column">
-              <div class="filter-label">{{ header.text }}</div>
+              <label :for="`rating-stars-filter`" class="filter-label">{{ header.text }}</label>
               <select 
+                :id="`rating-stars-filter`"
                 class="form-select form-select-sm"
                 @change="updateRatingSearch('rating', $event.target.value)"
-                aria-label="Filter by rating"
+                aria-label="Filter ratings by star rating"
               >
                 <option value="">All Ratings</option>
                 <option value="5">5 Stars</option>
@@ -235,36 +264,40 @@
           <!-- Custom cell rendering -->
           <template #item-rating="{ rating }">
             <div class="d-flex align-items-center gap-1">
-              <span class="fw-bold text-warning">{{ rating }}</span>
-              <div>
+              <span class="sr-only">{{ rating }} out of 5 stars</span>
+              <span class="fw-bold text-warning" aria-hidden="true">{{ rating }}</span>
+              <div role="img" :aria-label="`${rating} stars`" aria-hidden="true">
                 <i v-for="n in 5" 
                    :key="n" 
                    class="bi"
                    :class="n <= rating ? 'bi-star-fill text-warning' : 'bi-star text-muted'"
+                   aria-hidden="true"
                 ></i>
               </div>
             </div>
           </template>
 
           <template #item-comment="{ comment }">
-            <span v-if="comment" class="text-truncate d-inline-block" style="max-width: 300px;">
+            <span v-if="comment" class="text-truncate d-inline-block" style="max-width: 300px;" :title="comment">
               {{ comment }}
             </span>
             <span v-else class="text-muted fst-italic">No comment</span>
           </template>
 
           <template #item-timestamp="{ timestamp }">
-            <small class="text-muted">{{ formatDate(timestamp) }}</small>
+            <time :datetime="new Date(timestamp).toISOString()">
+              <small class="text-muted">{{ formatDate(timestamp) }}</small>
+            </time>
           </template>
         </EasyDataTable>
       </div>
-    </div>
+    </section>
 
     <!-- Info Section -->
-    <div class="alert alert-info mt-4" role="alert">
-      <h5 class="alert-heading">
-        <i class="bi bi-check-circle-fill me-2"></i>Interactive Table Features
-      </h5>
+    <section class="alert alert-info mt-4" role="region" aria-labelledby="table-features-heading">
+      <h2 id="table-features-heading" class="alert-heading h5">
+        <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>Interactive Table Features
+      </h2>
       <ul class="mb-0">
         <li><strong>Sorting:</strong> Click on any column header to sort (ascending/descending)</li>
         <li><strong>Column-Specific Search:</strong> Use the search inputs under each column header</li>
@@ -272,7 +305,7 @@
         <li><strong>Alternating Rows:</strong> Better visual separation between rows</li>
         <li><strong>Data Export:</strong> Export table data to CSV or PDF format using the buttons in the header</li>
       </ul>
-    </div>
+    </section>
   </div>
 </template>
 
