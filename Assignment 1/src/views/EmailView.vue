@@ -3,34 +3,57 @@
     <div class="container">
       <!-- Page Header -->
       <header class="page-header">
-        <h1>📧 Send Email</h1>
+        <h1><span aria-hidden="true">📧</span> Send Email</h1>
         <p class="subtitle">Send emails with attachments using SendGrid API</p>
       </header>
+      
       <!-- Configuration Status Card -->
-      <div class="config-status" :class="configStatus.configured ? 'configured' : 'not-configured'">
-        <div class="status-icon">
+      <section 
+        class="config-status" 
+        :class="configStatus.configured ? 'configured' : 'not-configured'"
+        role="status"
+        :aria-label="configStatus.configured ? 'SendGrid is configured and ready' : 'SendGrid configuration required'">
+        <div class="status-icon" aria-hidden="true">
           {{ configStatus.configured ? '✅' : '⚠️' }}
         </div>
         <div class="status-content">
-          <h3>{{ configStatus.configured ? 'SendGrid Configured' : 'Configuration Required' }}</h3>
+          <h2 class="h5">{{ configStatus.configured ? 'SendGrid Configured' : 'Configuration Required' }}</h2>
           <p>{{ configStatus.message }}</p>
-          <button v-if="!configStatus.configured" @click="showSetupInstructions = true" class="btn-setup">
+          <button 
+            v-if="!configStatus.configured" 
+            @click="showSetupInstructions = true" 
+            class="btn-setup"
+            aria-label="View SendGrid setup instructions">
             View Setup Instructions
           </button>
         </div>
-      </div>
+      </section>
+      
       <!-- Setup Instructions Modal -->
-      <div v-if="showSetupInstructions" class="modal-overlay" @click="showSetupInstructions = false">
-        <div class="modal-content" @click.stop>
+      <div 
+        v-if="showSetupInstructions" 
+        class="modal-overlay" 
+        @click="showSetupInstructions = false"
+        @keydown="handleModalKeydown">
+        <div 
+          class="modal-content" 
+          @click.stop
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="setup-modal-title"
+          ref="setupModalRef">
           <div class="modal-header">
-            <h2>🔧 SendGrid Setup Instructions</h2>
-            <button @click="showSetupInstructions = false" class="btn-close">&times;</button>
+            <h2 id="setup-modal-title"><span aria-hidden="true">🔧</span> SendGrid Setup Instructions</h2>
+            <button 
+              @click="showSetupInstructions = false" 
+              class="btn-close"
+              aria-label="Close setup instructions">&times;</button>
           </div>
           <div class="modal-body">
             <ol class="setup-steps">
               <li>
                 <strong>Create SendGrid Account</strong>
-                <p>Visit <a href="https://signup.sendgrid.com/" target="_blank">SendGrid Signup</a> and create a free account</p>
+                <p>Visit <a href="https://signup.sendgrid.com/" target="_blank" rel="noopener noreferrer">SendGrid Signup</a> and create a free account</p>
               </li>
               <li>
                 <strong>Verify Sender Email</strong>
@@ -51,18 +74,19 @@ VITE_SENDER_EMAIL=your_verified_email@example.com</code></pre>
                 <p>Stop and restart <code>npm run dev</code> to load the new environment variables</p>
               </li>
             </ol>
-            <p class="note">📝 Note: Free tier allows 100 emails per day</p>
+            <p class="note" role="note"><span aria-hidden="true">📝</span> Note: Free tier allows 100 emails per day</p>
           </div>
         </div>
       </div>
       <!-- Email Form -->
-      <div class="email-form-card">
-        <form @submit.prevent="handleSendEmail" class="email-form">
+      <section class="email-form-card" aria-labelledby="email-form-heading">
+        <h2 id="email-form-heading" class="sr-only">Email Composition Form</h2>
+        <form @submit.prevent="handleSendEmail" class="email-form" novalidate>
           <!-- Recipient Email -->
           <div class="form-group">
             <label for="recipient">
               <span class="label-text">To:</span>
-              <span class="required">*</span>
+              <span class="required" aria-label="required">*</span>
             </label>
             <input
               id="recipient"
@@ -70,14 +94,21 @@ VITE_SENDER_EMAIL=your_verified_email@example.com</code></pre>
               type="email"
               placeholder="recipient@example.com"
               required
+              aria-required="true"
+              :aria-invalid="emailErrors.to ? 'true' : 'false'"
+              :aria-describedby="emailErrors.to ? 'recipient-error' : undefined"
               :disabled="sending"
             />
+            <span v-if="emailErrors.to" id="recipient-error" class="error-text" role="alert">
+              {{ emailErrors.to }}
+            </span>
           </div>
+          
           <!-- Subject -->
           <div class="form-group">
             <label for="subject">
               <span class="label-text">Subject:</span>
-              <span class="required">*</span>
+              <span class="required" aria-label="required">*</span>
             </label>
             <input
               id="subject"
@@ -85,50 +116,77 @@ VITE_SENDER_EMAIL=your_verified_email@example.com</code></pre>
               type="text"
               placeholder="Enter email subject"
               required
+              aria-required="true"
+              :aria-invalid="emailErrors.subject ? 'true' : 'false'"
+              :aria-describedby="emailErrors.subject ? 'subject-error' : undefined"
               :disabled="sending"
             />
+            <span v-if="emailErrors.subject" id="subject-error" class="error-text" role="alert">
+              {{ emailErrors.subject }}
+            </span>
           </div>
+          
           <!-- Email Content Tabs -->
           <div class="form-group">
-            <div class="content-tabs">
-              <button
-                type="button"
-                :class="['tab', { active: contentTab === 'text' }]"
-                @click="contentTab = 'text'"
-                :disabled="sending"
-              >
-                Plain Text
-              </button>
-              <button
-                type="button"
-                :class="['tab', { active: contentTab === 'html' }]"
-                @click="contentTab = 'html'"
-                :disabled="sending"
-              >
-                HTML
-              </button>
-            </div>
-            <!-- Plain Text Content -->
-            <textarea
-              v-if="contentTab === 'text'"
-              v-model="emailForm.text"
-              placeholder="Enter your message here..."
-              rows="8"
-              required
-              :disabled="sending"
-            ></textarea>
-            <!-- HTML Content -->
-            <textarea
-              v-if="contentTab === 'html'"
-              v-model="emailForm.html"
-              placeholder="<h1>Enter HTML content here...</h1>"
-              rows="8"
-              :disabled="sending"
-            ></textarea>
+            <fieldset>
+              <legend class="label-text">Email Content:</legend>
+              <div class="content-tabs" role="tablist" aria-label="Email content format">
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="contentTab === 'text'"
+                  :aria-controls="contentTab === 'text' ? 'text-content' : undefined"
+                  :class="['tab', { active: contentTab === 'text' }]"
+                  @click="contentTab = 'text'"
+                  :disabled="sending"
+                  id="tab-text"
+                >
+                  Plain Text
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="contentTab === 'html'"
+                  :aria-controls="contentTab === 'html' ? 'html-content' : undefined"
+                  :class="['tab', { active: contentTab === 'html' }]"
+                  @click="contentTab = 'html'"
+                  :disabled="sending"
+                  id="tab-html"
+                >
+                  HTML
+                </button>
+              </div>
+              
+              <!-- Plain Text Content -->
+              <div v-if="contentTab === 'text'" role="tabpanel" id="text-content" aria-labelledby="tab-text">
+                <label for="text-content-input" class="sr-only">Plain text email content</label>
+                <textarea
+                  id="text-content-input"
+                  v-model="emailForm.text"
+                  placeholder="Enter your message here..."
+                  rows="8"
+                  required
+                  aria-required="true"
+                  :disabled="sending"
+                ></textarea>
+              </div>
+              
+              <!-- HTML Content -->
+              <div v-if="contentTab === 'html'" role="tabpanel" id="html-content" aria-labelledby="tab-html">
+                <label for="html-content-input" class="sr-only">HTML email content</label>
+                <textarea
+                  id="html-content-input"
+                  v-model="emailForm.html"
+                  placeholder="<h1>Enter HTML content here...</h1>"
+                  rows="8"
+                  :disabled="sending"
+                ></textarea>
+              </div>
+            </fieldset>
           </div>
           <!-- File Attachments -->
           <div class="form-group">
-            <label>
+            <label for="file-input">
               <span class="label-text">Attachments:</span>
               <span class="file-info">(Max 10MB per file)</span>
             </label>
@@ -141,16 +199,28 @@ VITE_SENDER_EMAIL=your_verified_email@example.com</code></pre>
                 accept="image/*,.pdf,.doc,.docx,.txt"
                 :disabled="sending"
                 id="file-input"
+                aria-describedby="file-upload-help"
               />
-              <label for="file-input" class="file-upload-button">
-                📎 Choose Files
+              <label for="file-input" class="file-upload-button" tabindex="0">
+                <span aria-hidden="true">📎</span> Choose Files
               </label>
-              <span class="file-count">{{ attachments.length }} file(s) selected</span>
+              <span class="file-count" role="status" aria-live="polite">
+                {{ attachments.length }} file(s) selected
+              </span>
+              <span id="file-upload-help" class="sr-only">
+                You can upload multiple files. Maximum 10 megabytes per file. 
+                Accepted formats: images, PDF, Word documents, and text files.
+              </span>
             </div>
+            
             <!-- Selected Files List -->
-            <div v-if="attachments.length > 0" class="files-list">
-              <div v-for="(file, index) in attachments" :key="index" class="file-item">
-                <span class="file-icon">📄</span>
+            <div v-if="attachments.length > 0" class="files-list" role="list" aria-label="Selected files">
+              <div 
+                v-for="(file, index) in attachments" 
+                :key="index" 
+                class="file-item"
+                role="listitem">
+                <span class="file-icon" aria-hidden="true">📄</span>
                 <span class="file-name">{{ file.name }}</span>
                 <span class="file-size">{{ formatFileSize(file.size) }}</span>
                 <button
@@ -158,90 +228,106 @@ VITE_SENDER_EMAIL=your_verified_email@example.com</code></pre>
                   @click="removeFile(index)"
                   class="btn-remove-file"
                   :disabled="sending"
+                  :aria-label="`Remove file ${file.name}`"
                 >
                   &times;
                 </button>
               </div>
             </div>
           </div>
+          
           <!-- Quick Templates -->
           <div class="form-group">
-            <label class="label-text">Quick Templates:</label>
-            <div class="template-buttons">
-              <button
-                type="button"
-                @click="loadTemplate('welcome')"
-                class="btn-template"
-                :disabled="sending"
-              >
-                Welcome Email
-              </button>
-              <button
-                type="button"
-                @click="loadTemplate('trail')"
-                class="btn-template"
-                :disabled="sending"
-              >
-                Trail Recommendation
-              </button>
-              <button
-                type="button"
-                @click="loadTemplate('newsletter')"
-                class="btn-template"
-                :disabled="sending"
-              >
-                Newsletter
-              </button>
-            </div>
+            <fieldset>
+              <legend class="label-text">Quick Templates:</legend>
+              <div class="template-buttons" role="group" aria-label="Email template options">
+                <button
+                  type="button"
+                  @click="loadTemplate('welcome')"
+                  class="btn-template"
+                  :disabled="sending"
+                  aria-label="Load welcome email template"
+                >
+                  Welcome Email
+                </button>
+                <button
+                  type="button"
+                  @click="loadTemplate('trail')"
+                  class="btn-template"
+                  :disabled="sending"
+                  aria-label="Load trail recommendation template"
+                >
+                  Trail Recommendation
+                </button>
+                <button
+                  type="button"
+                  @click="loadTemplate('newsletter')"
+                  class="btn-template"
+                  :disabled="sending"
+                  aria-label="Load newsletter template"
+                >
+                  Newsletter
+                </button>
+              </div>
+            </fieldset>
           </div>
+          
           <!-- Error Message -->
-          <div v-if="errorMessage" class="error-message">
-            <span class="error-icon">⚠️</span>
+          <div v-if="errorMessage" class="error-message" role="alert" aria-live="assertive">
+            <span class="error-icon" aria-hidden="true">⚠️</span>
             {{ errorMessage }}
           </div>
           <!-- Success Message -->
-          <div v-if="successMessage" class="success-message">
-            <span class="success-icon">✅</span>
+          <div v-if="successMessage" class="success-message" role="status" aria-live="polite">
+            <span class="success-icon" aria-hidden="true">✅</span>
             {{ successMessage }}
           </div>
+          
           <!-- Submit Buttons -->
           <div class="form-actions">
             <button
               type="submit"
               class="btn-send"
               :disabled="sending || !configStatus.configured"
+              :aria-disabled="sending || !configStatus.configured"
+              :aria-busy="sending"
+              :aria-label="sending ? 'Sending email, please wait' : 'Send email'"
             >
-              <span v-if="sending" class="spinner"></span>
-              {{ sending ? 'Sending...' : '📤 Send Email' }}
+              <span v-if="sending" class="spinner" aria-hidden="true"></span>
+              <span v-if="sending">Sending...</span>
+              <span v-else><span aria-hidden="true">📤</span> Send Email</span>
             </button>
             <button
               type="button"
               @click="resetForm"
               class="btn-reset"
               :disabled="sending"
+              :aria-disabled="sending"
+              aria-label="Reset form to default values"
             >
-              🔄 Reset
+              <span aria-hidden="true">🔄</span> Reset
             </button>
           </div>
         </form>
-      </div>
+      </section>
+      
       <!-- Email History -->
-      <div v-if="emailHistory.length > 0" class="email-history">
-        <h2>📜 Recent Emails</h2>
-        <div class="history-list">
-          <div v-for="(email, index) in emailHistory" :key="index" class="history-item">
-            <div class="history-icon">✉️</div>
+      <section v-if="emailHistory.length > 0" class="email-history" aria-labelledby="email-history-heading">
+        <h2 id="email-history-heading"><span aria-hidden="true">📜</span> Recent Emails</h2>
+        <div class="history-list" role="list" aria-label="Sent email history">
+          <div v-for="(email, index) in emailHistory" :key="index" class="history-item" role="listitem">
+            <div class="history-icon" aria-hidden="true">✉️</div>
             <div class="history-content">
-              <div class="history-to">To: {{ email.to }}</div>
-              <div class="history-subject">{{ email.subject }}</div>
+              <div class="history-to" aria-label="Recipient">To: {{ email.to }}</div>
+              <div class="history-subject" aria-label="Subject">{{ email.subject }}</div>
               <div class="history-meta">
-                <span class="history-time">{{ email.timestamp }}</span>
-                <span class="history-status" :class="email.status">{{ email.status }}</span>
+                <time class="history-time" :datetime="email.timestamp" aria-label="Sent time">{{ email.timestamp }}</time>
+                <span class="history-status" :class="email.status" :aria-label="`Status: ${email.status}`">{{ email.status }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -269,6 +355,10 @@ const sending = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const showSetupInstructions = ref(false)
+const emailErrors = ref({
+  to: '',
+  subject: ''
+})
 // Configuration status
 const configStatus = ref({
   configured: false,
@@ -317,6 +407,34 @@ const formatFileSize = (bytes) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+// Handle modal keyboard events
+const handleModalKeydown = (event) => {
+  if (event.key === 'Escape') {
+    showSetupInstructions.value = false
+  }
+}
+
+// Validate form fields
+const validateField = (field) => {
+  emailErrors.value[field] = ''
+  
+  if (field === 'to') {
+    if (!emailForm.value.to) {
+      emailErrors.value.to = 'Recipient email is required'
+    } else if (!isValidEmail(emailForm.value.to)) {
+      emailErrors.value.to = 'Please enter a valid email address'
+    }
+  }
+  
+  if (field === 'subject') {
+    if (!emailForm.value.subject) {
+      emailErrors.value.subject = 'Subject is required'
+    } else if (emailForm.value.subject.length < 3) {
+      emailErrors.value.subject = 'Subject must be at least 3 characters'
+    }
+  }
+}
+
 // Load email template
 const loadTemplate = (templateType) => {
   switch (templateType) {
@@ -355,8 +473,19 @@ const handleSendEmail = async () => {
     return
   }
   
+  // Validate form fields
+  validateField('to')
+  validateField('subject')
+  
+  // Check if there are validation errors
+  if (emailErrors.value.to || emailErrors.value.subject) {
+    errorMessage.value = 'Please fix the errors in the form'
+    return
+  }
+  
   // Validate recipient email
   if (!isValidEmail(emailForm.value.to)) {
+    emailErrors.value.to = 'Please enter a valid recipient email address'
     errorMessage.value = 'Please enter a valid recipient email address'
     return
   }
