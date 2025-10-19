@@ -7,6 +7,10 @@ const FirebaseTestView = () => import('@/views/FirebaseTestView.vue');
 const EmailView = () => import('@/views/EmailView.vue');
 const TablesView = () => import('@/views/TablesView.vue');
 const MapView = () => import('@/views/MapView.vue');
+const DashboardView = () => import('@/views/DashboardView.vue');
+const BulkEmailView = () => import('@/views/BulkEmailView.vue');
+const BookingView = () => import('@/views/BookingView.vue');
+const AIRecommendationView = () => import('@/views/AIRecommendationView.vue');
 
 const routes = [
   { path: '/', redirect: '/trails' },
@@ -16,6 +20,10 @@ const routes = [
   { path: '/email', name: 'email', component: EmailView },
   { path: '/tables', name: 'tables', component: TablesView },
   { path: '/map', name: 'map', component: MapView },
+  { path: '/dashboard', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true, roles: ['admin'] } },
+  { path: '/bulk-email', name: 'bulk-email', component: BulkEmailView, meta: { requiresAuth: true, roles: ['admin'] } },
+  { path: '/bookings', name: 'bookings', component: BookingView },
+  { path: '/ai-recommendations', name: 'ai-recommendations', component: AIRecommendationView },
 ];
 
 const router = createRouter({

@@ -8,15 +8,13 @@ const {setGlobalOptions} = require("firebase-functions");
 const {onRequest, onCall} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const sgMail = require("@sendgrid/mail");
-const cors = require("cors")({origin: true});
-const {defineSecret} = require("firebase-functions/params");
+const admin = require("firebase-admin");
+
+// Initialize Firebase Admin
+admin.initializeApp();
 
 // Set global options for cost control
 setGlobalOptions({maxInstances: 10});
-
-// Define SendGrid API Key as a secret
-// Set via: firebase functions:secrets:set SENDGRID_API_KEY
-const sendgridApiKey = defineSecret("SENDGRID_API_KEY");
 
 // Fallback: Try to get from environment or config
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || 
@@ -115,7 +113,106 @@ exports.helloWorld = onRequest((request, response) => {
       timestamp: new Date().toISOString(),
       functions: [
         "sendEmail - Send emails with attachments via SendGrid",
+        "getTrails - Get all trails data (API)",
+        "getBookings - Get all bookings data (API)",
       ],
     });
   });
+});
+
+/**
+ * REST API: Get all trails
+ * Public endpoint for third-party access
+ * GET /api/trails
+ */
+exports.getTrails = onRequest({cors: true}, async (request, response) => {
+  logger.info("API: Get trails called", {method: request.method});
+  
+  try {
+    // Only allow GET requests
+    if (request.method !== "GET") {
+      response.status(405).json({
+        error: "Method not allowed",
+        message: "Only GET requests are supported",
+      });
+      return;
+    }
+
+    const db = admin.firestore();
+    const trailsSnapshot = await db.collection("trails").get();
+    
+    const trails = [];
+    trailsSnapshot.forEach((doc) => {
+      trails.push({
+        id: doc.id,
+        ...doc.data(),
+      });
+    });
+
+    logger.info(`API: Returning ${trails.length} trails`);
+    
+    response.status(200).json({
+      success: true,
+      count: trails.length,
+      data: trails,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error("API: Error fetching trails", {error: error.message});
+    response.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * REST API: Get all bookings
+ * Public endpoint for third-party access
+ * GET /api/bookings
+ */
+exports.getBookings = onRequest({cors: true}, async (request, response) => {
+  logger.info("API: Get bookings called", {method: request.method});
+  
+  try {
+    // Only allow GET requests
+    if (request.method !== "GET") {
+      response.status(405).json({
+        error: "Method not allowed",
+        message: "Only GET requests are supported",
+      });
+      return;
+    }
+
+    const db = admin.firestore();
+    const bookingsSnapshot = await db.collection("bookings").get();
+    
+    const bookings = [];
+    bookingsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      bookings.push({
+        id: doc.id,
+        ...data,
+        // Convert Firestore timestamp to ISO string if exists
+        createdAt: data.createdAt?.toDate?.().toISOString() || data.createdAt,
+      });
+    });
+
+    logger.info(`API: Returning ${bookings.length} bookings`);
+    
+    response.status(200).json({
+      success: true,
+      count: bookings.length,
+      data: bookings,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error("API: Error fetching bookings", {error: error.message});
+    response.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: error.message,
+    });
+  }
 });

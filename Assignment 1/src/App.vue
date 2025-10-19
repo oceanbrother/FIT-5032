@@ -56,13 +56,51 @@
             <i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>Send Email
           </router-link>
           <router-link 
-            to="/firebase-test" 
+            to="/bookings" 
             class="nav-link btn btn-outline-info me-2"
+            active-class="active"
+            role="menuitem"
+            :aria-current="$route.path === '/bookings' ? 'page' : undefined"
+            aria-label="Bookings - Reserve your trail">
+            <i class="bi bi-calendar-check me-1" aria-hidden="true"></i>Bookings
+          </router-link>
+          <router-link 
+            to="/ai-recommendations" 
+            class="nav-link btn btn-outline-primary me-2"
+            active-class="active"
+            role="menuitem"
+            :aria-current="$route.path === '/ai-recommendations' ? 'page' : undefined"
+            aria-label="AI Recommendations - Get personalized trail suggestions">
+            <i class="bi bi-stars me-1" aria-hidden="true"></i>AI Recommendations
+          </router-link>
+          <router-link 
+            to="/firebase-test" 
+            class="nav-link btn btn-outline-secondary me-2"
             active-class="active"
             role="menuitem"
             :aria-current="$route.path === '/firebase-test' ? 'page' : undefined"
             aria-label="Firebase Test - Testing page">
             <i class="bi bi-gear me-1" aria-hidden="true"></i>Firebase Test
+          </router-link>
+          <router-link 
+            v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 
+            to="/dashboard" 
+            class="nav-link btn btn-outline-success me-2"
+            active-class="active"
+            role="menuitem"
+            :aria-current="$route.path === '/dashboard' ? 'page' : undefined"
+            aria-label="Dashboard - View statistics">
+            <i class="bi bi-graph-up me-1" aria-hidden="true"></i>Dashboard
+          </router-link>
+          <router-link 
+            v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 
+            to="/bulk-email" 
+            class="nav-link btn btn-outline-warning me-2"
+            active-class="active"
+            role="menuitem"
+            :aria-current="$route.path === '/bulk-email' ? 'page' : undefined"
+            aria-label="Bulk Email - Send emails to users">
+            <i class="bi bi-send-fill me-1" aria-hidden="true"></i>Bulk Email
           </router-link>
           <router-link 
             v-if="auth.isAuthenticated && auth.user?.role === 'admin'" 

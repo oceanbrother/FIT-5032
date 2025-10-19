@@ -14,8 +14,16 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
+    "@fullcalendar/vue3": "^6.1.19",
+    "@google/generative-ai": "^0.24.1",
     "@mapbox/mapbox-gl-geocoder": "^5.1.2",
     "@sendgrid/mail": "^8.1.6",
+    "axios": "^1.12.2",
+    "chart.js": "^4.5.1",
     "firebase": "^12.4.0",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
